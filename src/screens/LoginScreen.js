@@ -1,0 +1,146 @@
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import {Dimensions} from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+
+const LoginScreen = ({navigation}) => {
+  const {height} = Dimensions.get('window');
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        paddingTop: height * 0.2,
+        padding: 20,
+        backgroundColor: '#fff',
+      }}>
+      <Text style={{fontSize: 28, fontWeight: 'bold', color: '#333'}}>
+        Welcome back!
+      </Text>
+      <Text
+        style={{
+          fontSize: 28,
+          color: '#333',
+          marginBottom: 20,
+          fontWeight: 'bold',
+        }}>
+        Glad to see you, Again!
+      </Text>
+
+      <Text style={{marginBottom: 5, color: '#555'}}>Email</Text>
+      <TextInput
+        placeholder="Enter email"
+        placeholderTextColor="#999"
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          borderRadius: 8,
+          padding: 12,
+          marginBottom: 15,
+          color: '#333',
+          fontWeight: 'bold',
+        }}
+      />
+
+      <Text style={{marginBottom: 5, color: '#555'}}>Password</Text>
+      <TextInput
+        placeholder="Enter your password"
+        placeholderTextColor="#999"
+        secureTextEntry
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          borderRadius: 8,
+          padding: 12,
+          marginBottom: 15,
+          color: '#333',
+          fontWeight: 'bold',
+        }}
+      />
+
+      <TouchableOpacity onPress={() => navigation.navigate('PasswordReset')}>
+        <Text style={styles.forgotText}>Forgot Password?</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#292D32',
+          padding: 15,
+          borderRadius: 8,
+        }}>
+        <Text style={{color: '#fff', textAlign: 'center', fontWeight: 'bold'}}>
+          Login
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default LoginScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    color: '#000',
+  },
+  label: {
+    fontSize: 14,
+    color: '#000',
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 50,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    height: 50,
+    marginBottom: 10,
+    justifyContent: 'space-between',
+  },
+  passwordInput: {
+    flex: 1,
+  },
+  forgotText: {
+    alignSelf: 'flex-end',
+    marginBottom: 30,
+    color: '#aaa',
+  },
+  button: {
+    backgroundColor: '#000',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
