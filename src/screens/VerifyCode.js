@@ -7,9 +7,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useRoute } from '@react-navigation/native';
 
 const VerifyCode = ({navigation}) => {
   const [email, setEmail] = useState('');
+  const route = useRoute();
+  const { userEmail } = route.params;
 
   return (
     <View style={styles.container}>
@@ -21,7 +24,7 @@ const VerifyCode = ({navigation}) => {
       </TouchableOpacity>
       <Text style={styles.heading}>Enter Your Security Code</Text>
       <Text style={styles.subHeading}>
-        We sent a six-digit security code to {'\n'}*****bh**@gmail.com
+        We sent a six-digit security code to {'\n'} {userEmail}
       </Text>
 
       <TextInput

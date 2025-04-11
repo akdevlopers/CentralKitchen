@@ -31,7 +31,7 @@ const PasswordReset = ({navigation}) => {
         onChangeText={setEmail}
       />
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerifyCode')}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerifyCode', { userEmail: email })}>
         <Text style={styles.buttonText}>Continue</Text>
       </TouchableOpacity>
     </View>
