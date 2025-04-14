@@ -8,39 +8,66 @@ import {
   Alert,
   Modal,
   Image,
+  ActivityIndicator,
 } from 'react-native';
-import {Dimensions} from 'react-native';
-import {users} from '../Data/Data';
+import { Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LoginScreen = ({navigation}) => {
-  const {height} = Dimensions.get('window');
+const LoginScreen = ({ navigation }) => {
+  const { height } = Dimensions.get('window');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    const user = users.data.find(
-      item => item.email === email && item.password === password,
-    );
+  const handleLogin = async () => {
+    const user = { email, password }
+    setLoading(true);
 
-    if (user) {
-      setTimeout(() => {
-        setShowModal(true);
-        setEmail('');
-        setPassword('');
-      }, 400);
-      setTimeout(() => {
-        setShowModal(false);
-        navigation.navigate('Home', { user });
-      }, 1000);
-    } else {
-      setTimeout(() => {
-        setErrorModal(true);
-      }, 500);
+    try {
+      const response = await fetch('https://teachercanteen.akprojects.co/api/v1/kitchenlogin', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      if (json.status) {
+        await AsyncStorage.setItem("userToken", json.result.token);
+        setTimeout(() => {
+          setShowModal(true);
+          setEmail('');
+          setPassword('');
+        }, 400);
+        setTimeout(() => {
+          setShowModal(false);
+          navigation.navigate('Home', { user });
+        }, 1000);
+        console.log('Login Success:', json);
+      } else {
+        setTimeout(() => {
+          setErrorModal(true);
+        }, 500);
+        console.log('Login Failed:', json);
+      }
+      return json;
+
+    } catch (error) {
+      console.error('Login Failed:', error.message);
+    } finally {
+      setLoading(false);
     }
   };
+
 
   return (
     <View
@@ -50,7 +77,7 @@ const LoginScreen = ({navigation}) => {
         padding: 20,
         backgroundColor: '#fff',
       }}>
-      <Text style={{fontSize: 28, fontWeight: 'bold', color: '#333'}}>
+      <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333' }}>
         Welcome back!
       </Text>
       <Text
@@ -63,7 +90,7 @@ const LoginScreen = ({navigation}) => {
         Glad to see you, Again!
       </Text>
 
-      <Text style={{marginBottom: 5, color: '#555'}}>Email</Text>
+      <Text style={{ marginBottom: 5, color: '#555' }}>Email</Text>
       <TextInput
         placeholder="Enter email"
         placeholderTextColor="#999"
@@ -80,7 +107,7 @@ const LoginScreen = ({navigation}) => {
         }}
       />
 
-      <Text style={{marginBottom: 5, color: '#555'}}>Password</Text>
+      <Text style={{ marginBottom: 5, color: '#555' }}>Password</Text>
       <TextInput
         placeholder="Enter your password"
         placeholderTextColor="#999"
@@ -109,10 +136,12 @@ const LoginScreen = ({navigation}) => {
           padding: 15,
           borderRadius: 8,
         }}>
-        <Text style={{color: '#fff', textAlign: 'center', fontWeight: 'bold'}}>
+        <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
           Login
         </Text>
       </TouchableOpacity>
+
+      {/* Login Successfull Model  */}
 
       <Modal
         visible={showModal}
@@ -141,15 +170,17 @@ const LoginScreen = ({navigation}) => {
               <Icon name="check-circle" size={54} color="#2e7d32" />
             </View>
 
-            <Text style={{fontWeight: 'bold', fontSize: 18, marginBottom: 5}}>
+            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 5 }}>
               Success
             </Text>
-            <Text style={{color: '#777', textAlign: 'center'}}>
+            <Text style={{ color: '#777', textAlign: 'center' }}>
               User Verified Successfully
             </Text>
           </View>
         </View>
       </Modal>
+
+      {/* Incorect Credential Modal  */}
 
       <Modal
         visible={errorModal}
@@ -178,10 +209,10 @@ const LoginScreen = ({navigation}) => {
               <Icon name="times-circle" size={54} color="#ff4757" />
             </View>
 
-            <Text style={{fontWeight: 'bold', fontSize: 18, marginBottom: 5}}>
+            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 5 }}>
               Failed
             </Text>
-            <Text style={{color: '#777', textAlign: 'center'}}>
+            <Text style={{ color: '#777', textAlign: 'center' }}>
               Incorrect Email or Password
             </Text>
             <TouchableOpacity
@@ -193,11 +224,30 @@ const LoginScreen = ({navigation}) => {
                 paddingHorizontal: 25,
                 borderRadius: 8,
               }}>
-              <Text style={{color: '#fff'}}>OK</Text>
+              <Text style={{ color: '#fff' }}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+
+      {/* Loading Model */}
+
+      {loading && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={true}
+          onRequestClose={() => { }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.loaderBox}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loadingText}>Logging in...</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
+
     </View>
   );
 };
@@ -262,5 +312,24 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+
+  // loading\
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderBox: {
+    backgroundColor: '#333',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
   },
 });

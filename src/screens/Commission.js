@@ -1,15 +1,75 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Image, TextInput, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Image, TextInput, StyleSheet, Modal, TouchableWithoutFeedback } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { CommissionData } from '../Data/Data';
+import { CommissionData, users } from '../Data/Data';
 
 const college = require('../../public/assets/college.png');
 
-const Commission = ({ navigation }) => {
-    const [activeTab, setActiveTab] = useState('StockIn');
+const Commission = ({ navigation }) => {  
+  // FILTER DATA STARTS
+  const [visible, setVisible] = useState(false);
+
+  const [vendors, setVendors] = useState([]);
+  const [institutions, setInstitutions] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVendors, setSelectedVendors] = useState([]);
+  const [fromDate, setFromDate] = useState(new Date());
+  const [toDate, setToDate] = useState(new Date());
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
+  const [searchInstitution, setSearchInstitution] = useState('');
+  const [selectedInstitutions, setSelectedInstitutions] = useState([]);
+
+  const formatDate = (date) => {
+    const d = new Date(date);
+    return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getFullYear()}`;
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedVendors([]);
+    setFromDate(new Date());
+    setToDate(new Date());
+    setSearchInstitution('');
+    setSelectedInstitutions([]);
+    setShowFromPicker(false);
+    setShowToPicker(false);
+  };
+
+
+  useEffect(() => {
+    const vendorSet = new Set();
+    const schoolSet = new Set();
+
+    users.data.forEach(user => {
+      user.stockin.forEach(stock => {
+        vendorSet.add(stock.brand);
+      });
+      user.stockout.forEach(out => {
+        schoolSet.add(out.school);
+      });
+    });
+
+    setVendors(Array.from(vendorSet));
+    setInstitutions(Array.from(schoolSet));
+  }, []);
+
+  const filteredVendors = vendors.filter(v =>
+    v.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const toggleVendor = (vendor) => {
+    setSelectedVendors(prev =>
+      prev.includes(vendor)
+        ? prev.filter(v => v !== vendor)
+        : [...prev, vendor]
+    );
+  };
+
+  // FILTER ENDS 
 
     const renderStockOut = ({ item }) => (
         <TouchableOpacity onPress={() => navigation.navigate('CommissionDetail', { data: item })}>
@@ -46,13 +106,13 @@ const Commission = ({ navigation }) => {
                 <TextInput
                     placeholder="Search History"
                     placeholderTextColor="#999"
-                    style={styles.input}
+                    style={styles.searchInput}
                 />
             </View>
             <View style={styles.filterContainer}>
                 <View style={styles.filterBox}>
                     <Text style={styles.label}>Vendor</Text>
-                    <TouchableOpacity style={styles.filterButton}>
+                    <TouchableOpacity style={styles.filterButton} onPress={() => setVisible(true)}>
                         <Text style={styles.buttonText}>All</Text>
                         <AntDesign name="down" size={14} color="#555" />
                     </TouchableOpacity>
@@ -76,6 +136,156 @@ const Commission = ({ navigation }) => {
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={renderStockOut}
             />
+            <Modal visible={visible} animationType="slide" transparent>
+                <TouchableWithoutFeedback onPress={() => setVisible(false)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback onPress={() => { }}>
+                            <View style={styles.modalContainer}>
+                                <View style={styles.modalContent}>
+                                    <TouchableOpacity style={styles.closeIcon} onPress={() => setVisible(false)}>
+                                        <Ionicons name="close" size={24} color="black" />
+                                    </TouchableOpacity>
+
+
+                                    <Text style={styles.heading}>Filter</Text>
+
+                                    <Text style={styles.label}>Vendor</Text>
+                                    <TextInput
+                                        placeholder="Search vendor"
+                                        style={styles.input}
+                                        value={searchTerm}
+                                        onChangeText={setSearchTerm}
+                                    />
+
+                                    <FlatList
+                                        data={filteredVendors}
+                                        numColumns={2}
+                                        keyExtractor={(item, index) => index.toString()}
+                                        renderItem={({ item }) => {
+                                            const isChecked = selectedVendors.includes(item);
+                                            return (
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.checkboxContainer,
+                                                        isChecked && styles.checkboxSelected
+                                                    ]}
+                                                    onPress={() => toggleVendor(item)}
+                                                >
+                                                    <Ionicons
+                                                        name={isChecked ? 'checkbox' : 'square-outline'}
+                                                        size={20}
+                                                        color={isChecked ? '#E85C33' : 'gray'}
+                                                        style={{ marginRight: 6 }}
+                                                    />
+                                                    <Text style={{ color: isChecked ? '#E85C33' : '#000' }}>{item}</Text>
+                                                </TouchableOpacity>
+                                            );
+                                        }}
+                                    />
+
+                                    <Text style={styles.label}>Date Range</Text>
+                                    <View style={styles.dateContainer}>
+                                        <TouchableOpacity style={styles.dateBox} onPress={() => setShowFromPicker(true)}>
+                                            <Ionicons name="calendar-outline" size={20} color="gray" />
+                                            <Text>{formatDate(fromDate)}</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity style={styles.dateBox} onPress={() => setShowToPicker(true)}>
+                                            <Ionicons name="calendar-outline" size={20} color="gray" />
+                                            <Text>{formatDate(toDate)}</Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    {showFromPicker && (
+                                        <DateTimePicker
+                                            value={fromDate}
+                                            mode="date"
+                                            display="default"
+                                            onChange={(event, selectedDate) => {
+                                                setShowFromPicker(false);
+                                                if (selectedDate) setFromDate(selectedDate);
+                                            }}
+                                        />
+                                    )}
+
+                                    {showToPicker && (
+                                        <DateTimePicker
+                                            value={toDate}
+                                            mode="date"
+                                            display="default"
+                                            onChange={(event, selectedDate) => {
+                                                setShowToPicker(false);
+                                                if (selectedDate) setToDate(selectedDate);
+                                            }}
+                                        />
+                                    )}
+
+
+                                    <Text style={styles.label}>Institutions</Text>
+
+                                    <TextInput
+                                        placeholder="Search institution"
+                                        style={styles.input}
+                                        value={searchInstitution}
+                                        onChangeText={setSearchInstitution}
+                                    />
+
+                                    {searchInstitution.length > 0 && (
+                                        <FlatList
+                                            data={institutions.filter(item =>
+                                                item.toLowerCase().includes(searchInstitution.toLowerCase()) &&
+                                                !selectedInstitutions.includes(item)
+                                            )}
+                                            keyExtractor={(item, index) => index.toString()}
+                                            renderItem={({ item }) => (
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        setSelectedInstitutions(prev => [...prev, item]);
+                                                        setSearchInstitution('');
+                                                    }}
+                                                >
+                                                    <Text style={styles.searchItem}>{item}</Text>
+                                                </TouchableOpacity>
+                                            )}
+                                        />
+                                    )}
+
+                                    <View style={styles.tagContainer}>
+                                        {selectedInstitutions.map((item, index) => (
+                                            <View key={index} style={styles.tag}>
+                                                <Text>{item}</Text>
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        setSelectedInstitutions(prev => prev.filter(i => i !== item));
+                                                    }}
+                                                >
+                                                    <Ionicons name="close" size={16} />
+                                                </TouchableOpacity>
+                                            </View>
+                                        ))}
+                                    </View>
+
+
+                                    <View style={styles.checkboxContainer}>
+                                        {/* You can replace with actual CheckBox if needed */}
+                                        <Text>Missed Items</Text>
+                                    </View>
+
+                                    <View style={styles.footer}>
+                                        <TouchableOpacity onPress={clearFilters}>
+                                            <Text style={styles.clear}>Clear Filter</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity style={styles.filterBtn}>
+                                            <Text style={styles.filterText}>Filter</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
         </View>
     );
 };
@@ -136,7 +346,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         paddingVertical: 8,
     },
-    input: {
+    searchInput: {
         marginLeft: 10,
         flex: 1,
         color: '#000',
@@ -339,4 +549,200 @@ const styles = StyleSheet.create({
         marginTop: 6,
         paddingTop: 10
     },
+
+    
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '60%',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    margin: 20,
+    borderRadius: 10,
+    padding: 20
+  },
+  closeIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#eee',
+    padding: 10,
+    borderRadius: 20,
+    zIndex: 10,
+  },
+  heading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15
+  },
+  label: {
+    marginTop: 10,
+    fontWeight: '600'
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 5
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+    width: '50%'
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10
+  },
+  dateBox: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    width: '47%'
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10
+  },
+  tag: {
+    flexDirection: 'row',
+    backgroundColor: '#eee',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    margin: 3,
+    alignItems: 'center',
+    gap: 5
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20
+  },
+  clear: {
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    paddingHorizontal: 25,
+    paddingVertical: 10
+  },
+  filterBtn: {
+    backgroundColor: '#EA5B27',
+    borderRadius: 8,
+    paddingHorizontal: 25,
+    paddingVertical: 10
+  },
+  filterText: {
+    color: '#fff',
+    fontWeight: 'bold'
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    margin: 20,
+    borderRadius: 10,
+    padding: 20
+  },
+  heading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15
+  },
+  label: {
+    marginTop: 10,
+    fontWeight: '600'
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+    width: '50%'
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10
+  },
+  dateBox: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    width: '47%'
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10
+  },
+  tag: {
+    flexDirection: 'row',
+    backgroundColor: '#eee',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    margin: 3,
+    alignItems: 'center',
+    gap: 5
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20
+  },
+  filterBtn: {
+    backgroundColor: '#EA5B27',
+    borderRadius: 8,
+    paddingHorizontal: 25,
+    paddingVertical: 10
+  },
+  filterText: {
+    color: '#fff',
+    fontWeight: 'bold'
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    flex: 1,
+  },
+  searchItem: {
+    padding: 10,
+    backgroundColor: '#eee',
+    borderRadius: 6,
+    marginVertical: 4,
+  },
+
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+    gap: 8,
+  },
+
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#dfe6e9',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    margin: 4
+  },
 })
