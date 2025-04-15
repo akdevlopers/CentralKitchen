@@ -10,9 +10,42 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute } from '@react-navigation/native';
 
 const VerifyCode = ({navigation}) => {
-  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const route = useRoute();
   const { userEmail } = route.params;
+
+  const handleOtp= async () => {
+    const user = { email: userEmail, emailotp: otp };
+    console.log(user, "otp check")
+    try {
+      const response = await fetch(
+        'https://teachercanteen.akprojects.co/api/v1/kitchenpasswordresetupdate',
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(user),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      if (json.status) {
+        navigation.navigate('NewPassword', {json});
+        console.log('Otp verify successfully:', json);
+      } else {
+        console.log('Failed to Verify otp:', json);
+      }
+      return json;
+    } catch (error) {
+      console.error('Otp sent Failed:', error.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -31,11 +64,12 @@ const VerifyCode = ({navigation}) => {
         placeholder="Enter the Security Code"
         placeholderTextColor="#999"
         style={styles.input}
-        value={email}
-        onChangeText={setEmail}
+        value={otp}
+        keyboardType='numeric'
+        onChangeText={setOtp}
       />
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('NewPassword')}>
+      <TouchableOpacity style={styles.button} onPress={handleOtp}>
         <Text style={styles.buttonText}>Continue</Text>
       </TouchableOpacity>
       <Text style={styles.label}>

@@ -102,6 +102,8 @@ const Home = ({ navigation }) => {
   const route = useRoute();
   const user = route.params?.user;
 
+  const [ currentUser, setCurrentUser ] = useState(user)
+
   // Camera setup
   const device = useCameraDevice(cameraPosition);
   const camera = useRef(null);
@@ -175,27 +177,25 @@ const Home = ({ navigation }) => {
           zoom={1}
         />
         <View style={styles.overlay}>
-          <View style={styles.frame} />
+          {/* Overlays around the frame */}
+          <View style={styles.maskTop} />
+          <View style={styles.middleRow}>
+            <View style={styles.maskSide} />
+            <View style={styles.frame} />
+            <View style={styles.maskSide} />
+          </View>
+          <View style={styles.maskBottom} />
+
+          {/* Close and Camera Flip Buttons */}
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setQrModel(false)}
           >
             <Text style={styles.closeButtonText}>×</Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={{
-              position: 'absolute',
-              bottom: 40,
-              alignSelf: 'center',
-              backgroundColor: '#ffffffcc',
-              borderRadius: 50,
-              padding: 15,
-              elevation: 5, // for Android shadow
-              shadowColor: '#000', // for iOS shadow
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 3,
-            }}
+            style={styles.flipButton}
             onPress={() =>
               setCameraPosition(cameraPosition === 'back' ? 'front' : 'back')
             }
@@ -204,6 +204,7 @@ const Home = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
+
     );
   };
 
@@ -794,13 +795,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  middleRow: {
+    flexDirection: 'row',
+  },
   frame: {
     width: 250,
     height: 250,
     borderWidth: 2,
     borderColor: 'white',
-    backgroundColor: 'transparent',
   },
+  maskTop: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  maskBottom: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  maskSide: {
+    width: (StyleSheet.hairlineWidth * 1000), // Auto fill based on screen
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    height: 250,
+  },
+  flipButton: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: '#ffffffcc',
+    borderRadius: 50,
+    padding: 15,
+    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  // ---  
   closeButton: {
     position: 'absolute',
     top: 50,
@@ -852,7 +883,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
     backgroundColor: 'white',

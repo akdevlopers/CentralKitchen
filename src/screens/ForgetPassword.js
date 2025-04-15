@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,47 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const PasswordReset = ({navigation}) => {
+const PasswordReset = ({ navigation }) => {
   const [email, setEmail] = useState('');
+
+  const handleReset = async () => {
+    const user = { email };
+    console.log(user);
+    try {
+      const response = await fetch(
+        'https://teachercanteen.akprojects.co/api/v1/kitchenpasswordreset',
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(user),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      if (json.status) {
+        navigation.navigate('VerifyCode', { userEmail: email });
+        console.log('Otp sent successfully:', json);
+      } else {
+        console.log('Failed to sent otp:', json);
+      }
+      return json;
+    } catch (error) {
+      console.error('Login Failed:', error.message);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
       {/* Back Icon */}
-      <TouchableOpacity style={{backgroundColor: 'Black'}} onPress={() => navigation.goBack()} >
+      <TouchableOpacity style={{ backgroundColor: 'Black' }} onPress={() => navigation.goBack()} >
         <Icon name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
       <Text style={styles.heading}>Password Reset</Text>
@@ -31,7 +65,7 @@ const PasswordReset = ({navigation}) => {
         onChangeText={setEmail}
       />
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerifyCode', { userEmail: email })}>
+      <TouchableOpacity style={styles.button} onPress={handleReset}>
         <Text style={styles.buttonText}>Continue</Text>
       </TouchableOpacity>
     </View>

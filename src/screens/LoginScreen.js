@@ -68,7 +68,6 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-
   return (
     <View
       style={{
