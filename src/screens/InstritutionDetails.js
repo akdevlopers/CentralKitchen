@@ -4,6 +4,7 @@ import college from '../../public/assets/college.png';
 import qrCode from '../../public/assets/qr-code.png';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const InstritutionDetails = ({ route }) => {
     const { data: initialData } = route.params;
@@ -14,74 +15,118 @@ const InstritutionDetails = ({ route }) => {
     const [canScan, setCanScan] = useState(true);
     const lastScannedCodeRef = useRef(null);
 
+    const [schoolData, setSchoolData] = useState()
+
+    useEffect(() => {
+        const fetchSchoolMenu = async () => {
+            const user = { order_date: "2024-09-17", school_id: 4 };
+            const token = await AsyncStorage.getItem('userToken');
+            console.log('Token school:', token);
+            console.log(user, "School Menu");
+
+            try {
+                const response = await fetch(
+                    'https://teachercanteen.akprojects.co/api/v1/schoolOrderMenuList',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+
+                        },
+                        body: JSON.stringify(user),
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const json = await response.json();
+
+                if (json.status) {
+                    setSchoolData(json.data)
+                    console.log('List Of School Menu:', schoolData);
+                } else {
+                    console.log('Failed to List School Menu:', json);
+                }
+
+            } catch (error) {
+                console.error('List School Menu Failed:', error.message);
+            }
+        };
+
+        fetchSchoolMenu();
+    }, []);
+
 
     // Camera setup
     const device = useCameraDevice(cameraPosition);
     const camera = useRef(null);
 
-
     const codeScanner = useCodeScanner({
         codeTypes: ['qr'],
         onCodeScanned: (codes) => {
-          if (!canScan) return;
-          const qrCode = codes.find(c => c.type === 'qr');
-          if (qrCode?.value) {
-            const currentValue = qrCode.value;
-            if (lastScannedCodeRef.current === currentValue) return;
-            lastScannedCodeRef.current = currentValue;
-      
-            console.log('Scanned QR:', currentValue);
-            setCanScan(false);
-      
-            try {
-              const scannedOrder = JSON.parse(currentValue);
-              if (!scannedOrder.brand || !scannedOrder.item) {
-                Alert.alert('Invalid QR Code', 'Missing brand or item information.');
-                return;
-              }
-      
-              setData(prevData => {
-                let found = false;
-      
-                const updatedOrders = prevData.todaysOrder.map(order => {
-                  if (
-                    order.brand === scannedOrder.brand &&
-                    order.item === scannedOrder.item &&
-                    order.location === scannedOrder.location
-                  ) {
-                    found = true;
-                    return { ...order, status: 'Delivered' };
-                  }
-                  return order;
-                });
-      
-                if (!found) {
-                  updatedOrders.push({
-                    brand: scannedOrder.brand,
-                    item: scannedOrder.item,
-                    location: scannedOrder.location,
-                    status: scannedOrder.status,
-                  });
-                  console.log('New Order Added', `${scannedOrder.brand} - ${scannedOrder.item}`);
-                } else {
-                  console.log('Updated', `${scannedOrder.brand} - ${scannedOrder.item} marked as Delivered`);
+            if (!canScan) return;
+            const qrCode = codes.find(c => c.type === 'qr');
+            if (qrCode?.value) {
+                const currentValue = qrCode.value;
+                if (lastScannedCodeRef.current === currentValue) return;
+                lastScannedCodeRef.current = currentValue;
+
+                console.log('Scanned QR:', currentValue);
+                setCanScan(false);
+
+                try {
+                    const scannedOrder = JSON.parse(currentValue);
+                    if (!scannedOrder.brand || !scannedOrder.item) {
+                        Alert.alert('Invalid QR Code', 'Missing brand or item information.');
+                        return;
+                    }
+
+                    setData(prevData => {
+                        let found = false;
+
+                        const updatedOrders = prevData.todaysOrder.map(order => {
+                            if (
+                                order.brand === scannedOrder.brand &&
+                                order.item === scannedOrder.item &&
+                                order.location === scannedOrder.location
+                            ) {
+                                found = true;
+                                return { ...order, status: 'Delivered' };
+                            }
+                            return order;
+                        });
+
+                        if (!found) {
+                            updatedOrders.push({
+                                brand: scannedOrder.brand,
+                                item: scannedOrder.item,
+                                location: scannedOrder.location,
+                                status: scannedOrder.status,
+                            });
+                            console.log('New Order Added', `${scannedOrder.brand} - ${scannedOrder.item}`);
+                        } else {
+                            console.log('Updated', `${scannedOrder.brand} - ${scannedOrder.item} marked as Delivered`);
+                        }
+
+                        return { ...prevData, todaysOrder: updatedOrders };
+                    });
+
+                } catch (err) {
+                    Alert.alert('Invalid QR Code', 'Make sure the QR contains a valid JSON string.');
+                    console.error('QR parse error:', err);
                 }
-      
-                return { ...prevData, todaysOrder: updatedOrders };
-              });
-      
-            } catch (err) {
-              Alert.alert('Invalid QR Code', 'Make sure the QR contains a valid JSON string.');
-              console.error('QR parse error:', err);
+
+                setTimeout(() => {
+                    setCanScan(true);
+                }, 1000);
             }
-      
-            setTimeout(() => {
-              setCanScan(true);
-            }, 1000);
-          }
         }
-      });
-    
+    });
+
     useEffect(() => {
         const checkPermission = async () => {
             const status = Camera.getCameraPermissionStatus();
@@ -105,6 +150,9 @@ const InstritutionDetails = ({ route }) => {
                 </View>
             );
         }
+
+
+
 
         return (
             <View style={styles.modalContainer}>
@@ -172,21 +220,21 @@ const InstritutionDetails = ({ route }) => {
 
             {/* Order List */}
             <FlatList
-                data={data.todaysOrder}
+                data={schoolData}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.orderCard}>
-                        <Image source={item.logo} style={styles.orderLogo} />
+                        <Image source={{uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}`}} style={styles.orderLogo} />
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.orderName}>{item.item}</Text>
-                            <Text style={styles.orderLocation}>{item.location}</Text>
+                            <Text style={styles.orderName}>{item.MenuTittleEnglish || 'No Data At Here'}</Text>
+                            <Text style={styles.orderLocation}>{item.BrandName || 'No Data At Here'}</Text>
                         </View>
                         <Text
                             style={[
                                 styles.orderStatus,
-                                { color: item.status === 'Delivered' ? 'green' : 'orange' },
+                                { color: item.OrderStatus === 'Delivered' ? 'green' : 'orange' },
                             ]}>
-                            {item.status}
+                            {item.OrderStatus}
                         </Text>
                     </View>
                 )}
@@ -419,7 +467,7 @@ const styles = StyleSheet.create({
 //           if (qrCode?.value) {
 //             const currentValue = qrCode.value;
 //             if (lastScannedCodeRef.current === currentValue) return;
-//             lastScannedCodeRef.current = currentValue; 
+//             lastScannedCodeRef.current = currentValue;
 //             console.log(currentValue, 'From insti')
 //             setCanScan(false);
 //             setTimeout(() => {

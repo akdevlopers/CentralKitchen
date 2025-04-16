@@ -33,6 +33,8 @@ const Home = ({ navigation }) => {
   const [cameraPosition, setCameraPosition] = useState('back');
   const [canScan, setCanScan] = useState(true);
 
+  const [token, setToken] = useState('')
+
   const lastScannedCodeRef = useRef(null);
 
 
@@ -102,11 +104,12 @@ const Home = ({ navigation }) => {
   const route = useRoute();
   const user = route.params?.user;
 
-  const [ currentUser, setCurrentUser ] = useState(user)
+  const [currentValue, setCurrentValue] = useState('')
 
   // Camera setup
   const device = useCameraDevice(cameraPosition);
   const camera = useRef(null);
+
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
@@ -114,14 +117,17 @@ const Home = ({ navigation }) => {
       if (!canScan) return;
       const qrCode = codes.find(c => c.type === 'qr');
       if (qrCode?.value) {
-        const currentValue = qrCode.value;
-        if (lastScannedCodeRef.current === currentValue) return;
-        lastScannedCodeRef.current = currentValue;
+        setCurrentValue(qrCode.value);
+        // if (lastScannedCodeRef.current === currentValue) return;
+        // lastScannedCodeRef.current = currentValue;
         console.log(currentValue, 'From Home Page')
+
+        handleStockIn()
+
         setCanScan(false);
         setTimeout(() => {
           setCanScan(true);
-        }, 1000);
+        }, 3000);
       }
     }
   });
@@ -203,10 +209,101 @@ const Home = ({ navigation }) => {
             <Ionicons name="camera-reverse-outline" size={30} color="#000" />
           </TouchableOpacity>
         </View>
+        <Modal transparent visible={notchVisible} animationType="fade">
+          <View style={styles.notchOverlay}>
+            <View style={styles.notchModalContainer}>
+              <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
+              <Text style={styles.notchSuccessText}>Success!</Text>
+            </View>
+          </View>
+        </Modal>
       </View>
 
     );
   };
+
+  const [notchVisible, setNotchVisible] = useState(false)
+
+
+  const handleStockIn = async () => {
+    setQrModel(true)
+    const token = await AsyncStorage.getItem('userToken');
+    const user = { sku: currentValue };
+    console.log(user, "otp check")
+    try {
+      const response = await fetch(
+        'https://teachercanteen.akprojects.co/api/v1/stock-in/scan',
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(user),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      if (json.status) {
+        setNotchVisible(true)
+        Alert.alert(json.message)
+        console.log('Stock In successfully:', json);
+      } else {
+        Alert.alert(json.message)
+        console.log('Failed to Stock In:', json);
+      }
+      setTimeout(() => {
+        setNotchVisible(false)
+      },1000)
+      return json;
+    } catch (error) {
+      console.error('Stock In Failed:', error.message);
+    }
+  };
+
+  const [userData, setUserData] = useState({})
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = await AsyncStorage.getItem('userToken');
+
+      try {
+        const response = await fetch(
+          'https://teachercanteen.akprojects.co/api/v1/stock-in/list?vendor=all',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const json = await response.json();
+        if (json.status) {
+          setUserData(json.result);
+          console.log('List User:', userData);
+        } else {
+          console.log('Failed to Stock In:', json);
+        }
+      } catch (error) {
+        console.error('Stock In Failed:', error.message);
+      }
+    };
+
+    fetchData();
+  }, []);
+
 
   return (
     <View style={styles.container}>
@@ -291,15 +388,15 @@ const Home = ({ navigation }) => {
 
           {/* List */}
           <FlatList
-            data={vendarData.data}
-            keyExtractor={item => item.id.toString()}
+            data={userData}
+            keyExtractor={item => item.StockinID.toString()}
             renderItem={({ item }) => (
               <View style={styles.itemContainer}>
-                <Image source={img} style={styles.logo} />
+                <Image source={{uri : `https://teachercanteen.akprojects.co/${item.BrandLogo}`}} style={styles.logo} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.itemName}>{item.itemName}</Text>
-                  <Text style={styles.qty}>Qty : {item.quantity}</Text>
-                  <Text style={styles.date}>{item.date}</Text>
+                  <Text style={styles.itemName}>{item.MenuTittleEnglish}</Text>
+                  <Text style={styles.qty}>Qty : {item.StockinQuantity}</Text>
+                  <Text style={styles.date}>{item.LastUpdatedAt}</Text>
                 </View>
               </View>
             )}
@@ -661,6 +758,7 @@ const styles = StyleSheet.create({
     height: 50,
     marginRight: 10,
     resizeMode: 'contain',
+    borderRadius: 50
   },
   itemName: {
     fontWeight: 'bold',
@@ -1080,6 +1178,31 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     margin: 4
+  },
+
+  notchOverlay: {
+    flex: 1,
+    // justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notchModalContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    elevation: 6, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  notchSuccessText: {
+    marginLeft: 10,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
