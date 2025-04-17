@@ -12,6 +12,7 @@ import Institution from './screens/Insitution';
 import InstritutionDetails from './screens/InstritutionDetails';
 import EditProfile from './screens/EditProfile';
 import History from './screens/History';
+import historyDetails from './screens/HistoryDetails';
 import Commission from './screens/Commission';
 import CommissionDetail from './screens/CommissionDetail';
 
@@ -31,7 +32,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="Home">
         <Stack.Screen
           name="Home"
           component={Home}
@@ -75,6 +76,11 @@ export default function App() {
         <Stack.Screen
           name="History"
           component={History}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="historyDetails"
+          component={historyDetails}
           options={{ headerShown: false }}
         />
         <Stack.Screen

@@ -42,6 +42,7 @@ const Home = ({ navigation }) => {
 
   // FILTER DATA STARTS
   const [visible, setVisible] = useState(false);
+  const [dateVisible, setDateVisible] = useState(false);
 
   const [vendors, setVendors] = useState([]);
   const [institutions, setInstitutions] = useState([]);
@@ -270,6 +271,9 @@ const Home = ({ navigation }) => {
   // User List
 
   const [userData, setUserData] = useState({})
+  const [userDataError, setUserDataError] = useState()
+  const [FromHomeDate, setFromHomeDate] = useState(new Date())
+  const [ToHomeDate, setToHomeDate] = useState(new Date())
   const [selectedBrand, setSelectedBrand] = useState("All");
   const [selectedBrandId, setSelectedBrandId] = useState();
 
@@ -277,8 +281,12 @@ const Home = ({ navigation }) => {
     useCallback(() => {
       const fetchData = async () => {
         const token = await AsyncStorage.getItem('userToken');
-        const data = { vendor: selectedBrandId }
-        console.log(data)
+        const data = {
+          vendor: selectedBrandId,
+          from_date: formatDate(fromDate),
+          to_date: formatDate(toDate),
+        }
+        console.log("Home Filter Data", data)
 
         try {
           const response = await fetch(
@@ -301,8 +309,9 @@ const Home = ({ navigation }) => {
           const json = await response.json();
           if (json.status) {
             setUserData(json.result);
-            console.log('List User:', userData);
+            setUserDataError(json.status)
           } else {
+            setUserDataError(json.status)
             console.log('Failed to Stock In:', json);
           }
         } catch (error) {
@@ -310,18 +319,41 @@ const Home = ({ navigation }) => {
         }
       };
       fetchData();
-    }, [selectedBrand])
+    }, [selectedBrand, fromDate, toDate])
   );
+  console.log('List User:', userData);
 
   // Instritutions List
   const [instDate, setInstDate] = useState(new Date())
   const [instritutions, setInstritutions] = useState({})
+  const [selectedStatusBrand, setSelectedStatusBrand] = useState("All");
+  const [selectedStatusBrandId, setSelectedStatusBrandId] = useState();
+  
+console.log(selectedStatusBrandId, "gaysufkyk")
+  
+  const instListStatus = [
+    {
+        "StatusID": "",
+        "StatusName": "All"
+    },
+    {
+        "StatusID": 1,
+        "StatusName": "Delivered"
+    },
+    {
+        "StatusID": 0,
+        "StatusName": "Pending"
+    }
+]
 
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
         const token = await AsyncStorage.getItem('userToken');
-        const user = { order_date: formatDate(instDate) };
+        const user = { 
+          order_date: formatDate(instDate),
+          status: selectedStatusBrandId
+         };
 
         console.log("DONO", user);
         try {
@@ -355,17 +387,14 @@ const Home = ({ navigation }) => {
       };
 
       fetchData();
-    }, [instDate])
+    }, [instDate, selectedStatusBrandId])
   );
 
   const [FliterList, setFliterList] = useState({})
-  console.log(selectedBrand)
-
 
   useEffect(() => {
     const fetchFilterHome = async () => {
       const token = await AsyncStorage.getItem('userToken');
-
       try {
         const response = await fetch(
           'https://teachercanteen.akprojects.co/api/v1/getvendors',
@@ -404,6 +433,53 @@ const Home = ({ navigation }) => {
     }
     return [{ BrandID: '', BrandName: 'All' }];
   }, [FliterList]);
+
+
+
+  // const [FliterInstList, setFliterInstList] = useState({})
+
+  // useEffect(() => {
+  //   const fetchFilterHome = async () => {
+  //     const token = await AsyncStorage.getItem('userToken');
+
+  //     try {
+  //       const response = await fetch(
+  //         'https://teachercanteen.akprojects.co/api/v1/getvendors',
+  //         {
+  //           method: 'POST',
+  //           headers: {
+  //             Accept: 'application/json',
+  //             'Content-Type': 'application/json',
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       );
+
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! status: ${response.status}`);
+  //       }
+
+  //       const json = await response.json();
+  //       if (json.status) {
+  //         setFliterInstList(json.result);
+  //         console.log('Filter List Home:', FliterInstList);
+  //       } else {
+  //         console.log('Failed to Fetch Filter :', json);
+  //       }
+  //     } catch (error) {
+  //       console.error('Fetch Filter Failed:', error.message);
+  //     }
+  //   };
+
+  //   fetchFilterHome();
+  // }, []);
+
+  // const instListWithAll = useMemo(() => {
+  //   if (Array.isArray(FliterList)) {
+  //     return [{ BrandID: '', BrandName: 'All' }, ...FliterList];
+  //   }
+  //   return [{ BrandID: '', BrandName: 'All' }];
+  // }, [FliterList]);
 
   const today = new Date();
   const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -475,7 +551,7 @@ const Home = ({ navigation }) => {
           <View style={styles.filterContainer}>
 
             <View style={styles.vendorFilterContainer}>
-              <Text style={styles.vendorLabel}>Vendor</Text>
+              <Text style={styles.label}>Vendor</Text>
               <TouchableOpacity
                 style={styles.vendorDropdownButton}
                 onPress={() => setVisible(true)}
@@ -507,7 +583,7 @@ const Home = ({ navigation }) => {
                             setSelectedBrand(item.BrandName);
 
                             if (item.BrandName === 'All') {
-                              setSelectedBrandId(undefined); // Don't pass anything if "All" is selected
+                              setSelectedBrandId(undefined);
                             } else {
                               setSelectedBrandId(item.BrandID);
                             }
@@ -525,41 +601,124 @@ const Home = ({ navigation }) => {
               </Modal>
             </View>
 
-            <View style={styles.filterBox}>
-              <Text style={styles.vendorLabel}>Order Date</Text>
-              <TouchableOpacity style={styles.filterButton}>
-                <MaterialIcons name="date-range" size={16} color="#555" />
-                <Text style={styles.buttonText}>{formattedDate}</Text>
+            {/* order date  */}
+
+            <View style={styles.filterBoxDate}>
+              <Text style={styles.label}>Date Range</Text>
+              <TouchableOpacity style={styles.dateBoxInst} onPress={() => setDateVisible(true)}>
+                <Ionicons name="calendar-outline" size={20} color="gray" />
+                <Text>{formatDate(toDate)} - {formatDate(toDate)}</Text>
               </TouchableOpacity>
             </View>
+
+            {/* <View style={styles.filterBoxDate}>
+              <Text style={styles.label}>Date Range</Text>
+              <TouchableOpacity style={styles.dateBoxInst} onPress={() => setShowToPicker(true)}>
+                <Ionicons name="calendar-outline" size={20} color="gray" />
+                <Text>{formatDate(HomeDate)}</Text>
+              </TouchableOpacity>
+            </View> */}
+
           </View>
 
+
+
+          {/* {showToPicker && (
+            <DateTimePicker
+              value={HomeDate}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowToPicker(false);
+                if (event.type === "set" && selectedDate) {
+                  setHomeDate(selectedDate);
+                }
+              }}
+            />
+          )} */}
+
           {/* List */}
-          <FlatList
-            data={userData}
-            keyExtractor={item => item.StockinID.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.itemContainer}>
-                <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}` }} style={styles.logo} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemName}>{item.MenuTittleEnglish}</Text>
-                  <Text style={styles.qty}>Qty : {item.StockinQuantity}</Text>
-                  <Text style={styles.date}>{item.StockinUpdated}</Text>
+          {userDataError ? (
+            <FlatList
+              data={userData}
+              keyExtractor={item => item.StockinID.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.itemContainer}>
+                  <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}` }} style={styles.logo} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.itemName}>{item.MenuTittleEnglish}</Text>
+                    <Text style={styles.qty}>Qty : {item.StockinQuantity}</Text>
+                    <Text style={styles.date}>{item.StockinUpdated}</Text>
+                  </View>
                 </View>
-              </View>
-            )}
-          />
+              )}
+            />) : (
+            <View style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Text style={{
+                fontSize: 20,
+                fontWeight: 'bold'
+              }}>No records found.</Text>
+            </View>
+          )
+          }
         </>
       ) : page === "Instritution" ? (
         <>
           {/* Filters */}
           <View style={styles.filterContainer}>
-            <View style={styles.filterBox}>
+          <View style={styles.vendorFilterContainer}>
               <Text style={styles.label}>Vendor</Text>
-              <TouchableOpacity style={styles.filterButton} onPress={() => setVisible(true)}>
-                <Text style={styles.buttonText}>All</Text>
+              <TouchableOpacity
+                style={styles.vendorDropdownButton}
+                onPress={() => setVisible(true)}
+              >
+                <Text style={styles.vendorDropdownText}>{selectedStatusBrand}</Text>
                 <AntDesign name="down" size={14} color="#555" />
               </TouchableOpacity>
+
+              {/* Dropdown Modal */}
+              <Modal
+                visible={visible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setVisible(false)}
+              >
+                <TouchableOpacity
+                  style={styles.vendorModalOverlay}
+                  onPress={() => setVisible(false)}
+                  activeOpacity={1}
+                >
+                  <View style={styles.vendorDropdownMenu}>
+                    <FlatList
+                      data={instListStatus}
+                      keyExtractor={(item, index) => `${item.StatusID}-${index}`}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          style={styles.vendorDropdownItem}
+                          onPress={() => {
+                            setSelectedStatusBrand(item.StatusName);
+
+                            if (item.BrandName === 'All') {
+                              setSelectedStatusBrandId(undefined);
+                            } else {
+                              setSelectedStatusBrandId(item.StatusID);
+                            }
+                            setVisible(false);
+                          }}
+                        >
+                          <Text>{item.StatusName}</Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+
+
+                  </View>
+                </TouchableOpacity>
+              </Modal>
             </View>
 
             <View style={styles.filterBoxDate}>
@@ -669,7 +828,70 @@ const Home = ({ navigation }) => {
 
       {/* Filter Modal  */}
 
+      <Modal visible={dateVisible} animationType="slide" transparent>
+        <TouchableWithoutFeedback onPress={() => setDateVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => { }}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                  <TouchableOpacity style={styles.closeIcon} onPress={() => setDateVisible(false)}>
+                    <Ionicons name="close" size={24} color="black" />
+                  </TouchableOpacity>
 
+                  <Text style={styles.label}>Vendor</Text>
+
+                  <Text style={styles.label}>Date Range</Text>
+                  <View style={styles.dateContainer}>
+                    <TouchableOpacity style={styles.dateBox} onPress={() => setShowFromPicker(true)}>
+                      <Ionicons name="calendar-outline" size={20} color="gray" />
+                      <Text>{formatDate(fromDate)}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.dateBox} onPress={() => setShowToPicker(true)}>
+                      <Ionicons name="calendar-outline" size={20} color="gray" />
+                      <Text>{formatDate(toDate)}</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {showFromPicker && (
+                    <DateTimePicker
+                      value={fromDate}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        setShowFromPicker(false);
+                        if (selectedDate) setFromDate(selectedDate);
+                      }}
+                    />
+                  )}
+
+                  {showToPicker && (
+                    <DateTimePicker
+                      value={toDate}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        setShowToPicker(false);
+                        if (selectedDate) setToDate(selectedDate);
+                      }}
+                    />
+                  )}
+
+                  <View style={styles.footer}>
+                    <TouchableOpacity onPress={clearFilters}>
+                      <Text style={styles.clear}>Clear Filter</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.filterBtn} onPress={() => setDateVisible(false)}>
+                      <Text style={styles.filterText}>Filter</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomTabContainer}>
@@ -804,6 +1026,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#fff',
+    // position: 'absolute',
+    // bottom: 15,
+    // left: 16,
     // paddingVertical: 12,
     borderTopWidth: 1,
     borderColor: '#ddd',
@@ -811,6 +1036,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
+    width: "100%"
     // elevation: 8,
   },
   tabItem: {
@@ -1259,7 +1485,7 @@ const styles = StyleSheet.create({
   vendorModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'center',
+    // justifyContent: 'center',
     paddingVertical: 230,
     paddingLeft: 18,
     paddingRight: 200

@@ -6,6 +6,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { users } from '../Data/Data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const college = require('../../public/assets/college.png');
 
@@ -25,11 +26,19 @@ const Commission = ({ navigation }) => {
     const [selectedInstitutions, setSelectedInstitutions] = useState([]);
 
     const [CommissionData, setCommissionData] = useState({})
+    const [CommissionInstData, setCommissionInstData] = useState({})
+
+    const [StockOut, setStockOut] = useState({});
 
     useEffect(() => {
-        const fetchCommissionData = async () => {
+        const fetchCommissionFilterData = async () => {
             const token = await AsyncStorage.getItem('userToken');
-
+            const data = {
+                fromDate: formatDate(fromDate),
+                toDate: formatDate(toDate),
+                vendor: "4"
+            }
+            console.log(data)
             try {
                 const response = await fetch(
                     'https://teachercanteen.akprojects.co/api/v1/commissionsEarned',
@@ -39,7 +48,6 @@ const Commission = ({ navigation }) => {
                             Accept: 'application/json',
                             'Content-Type': 'application/json',
                             Authorization: `Bearer ${token}`,
-
                         },
                     },
                 );
@@ -51,8 +59,8 @@ const Commission = ({ navigation }) => {
                 const json = await response.json();
 
                 if (json.status) {
-                    setCommissionData(json)
-                    console.log('Commision Data', CommissionData);
+                    setCommissionInstData(json)
+                    console.log('Commision Filter Data', CommissionInstData);
                 } else {
                     console.log('Failed to List Commision Data:', json);
                 }
@@ -62,12 +70,12 @@ const Commission = ({ navigation }) => {
             }
         };
 
-        fetchCommissionData();
-    }, []);
+        fetchCommissionFilterData();
+    }, [fromDate, toDate]);
 
     const formatDate = (date) => {
         const d = new Date(date);
-        return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getFullYear()}`;
+        return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
     };
 
     const clearFilters = () => {
@@ -113,10 +121,48 @@ const Commission = ({ navigation }) => {
 
     // FILTER ENDS 
 
+    useEffect(() => {
+        const fetchCommissionData = async () => {
+            const token = await AsyncStorage.getItem('userToken');
+            try {
+                const response = await fetch(
+                    'https://teachercanteen.akprojects.co/api/v1/fetchInstitutions',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(data)
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const json = await response.json();
+
+                if (json.status) {
+                    setCommissionData(json)
+                    console.log('Commision Data', CommissionData);
+                } else {
+                    console.log('Failed to List Commision Data:', json);
+                }
+
+            } catch (error) {
+                console.error('List Commision Data Failed:', error.message);
+            }
+        };
+
+        fetchCommissionData();
+    }, []);
+
     const renderStockOut = ({ item }) => (
         <TouchableOpacity onPress={() => navigation.navigate('CommissionDetail', { data: item })}>
             <View style={styles.itemContainer}>
-                <Image source={{uri: `https://teachercanteen.akprojects.co/${item.school_logo}`}} style={styles.logo} />
+                <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.school_logo}` }} style={styles.logo} />
                 <View style={{ flex: 1 }}>
                     <Text style={styles.itemName}>{item.school_name}</Text>
                     <Text style={styles.qty}>{item.school_address}</Text>
@@ -162,7 +208,7 @@ const Commission = ({ navigation }) => {
 
                 <View style={styles.filterBox}>
                     <Text style={styles.label}>Date Range</Text>
-                    <TouchableOpacity style={styles.filterButton}>
+                    <TouchableOpacity style={styles.filterButton} onPress={() => setVisible(true)}>
                         <MaterialIcons name="date-range" size={16} color="#555" />
                         <Text style={styles.buttonText}>12th - 14th Mar,25</Text>
                     </TouchableOpacity>
@@ -191,7 +237,7 @@ const Commission = ({ navigation }) => {
 
                                     <Text style={styles.heading}>Filter</Text>
 
-                                    <Text style={styles.label}>Vendor</Text>
+                                    {/* <Text style={styles.label}>Vendor</Text>
                                     <TextInput
                                         placeholder="Search vendor"
                                         style={styles.input}
@@ -223,7 +269,7 @@ const Commission = ({ navigation }) => {
                                                 </TouchableOpacity>
                                             );
                                         }}
-                                    />
+                                    /> */}
 
                                     <Text style={styles.label}>Date Range</Text>
                                     <View style={styles.dateContainer}>
@@ -308,10 +354,9 @@ const Commission = ({ navigation }) => {
                                     </View>
 
 
-                                    <View style={styles.checkboxContainer}>
-                                        {/* You can replace with actual CheckBox if needed */}
+                                    {/* <View style={styles.checkboxContainer}>
                                         <Text>Missed Items</Text>
-                                    </View>
+                                    </View> */}
 
                                     <View style={styles.footer}>
                                         <TouchableOpacity onPress={clearFilters}>

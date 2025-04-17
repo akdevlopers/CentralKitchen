@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import college from '../../public/assets/college.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const InstritutionDetails = ({ route, navigation }) => {
+const historyDetails = ({ route, navigation }) => {
     const { data } = route.params;
     const [CommissionData, setCommissionData] = useState({})
 
@@ -15,7 +14,7 @@ const InstritutionDetails = ({ route, navigation }) => {
 
             try {
                 const response = await fetch(
-                    'https://teachercanteen.akprojects.co/api/v1/commissionsEarnedMenu',
+                    'https://teachercanteen.akprojects.co/api/v1/stockOutMenus',
                     {
                         method: 'POST',
                         headers: {
@@ -35,9 +34,7 @@ const InstritutionDetails = ({ route, navigation }) => {
 
                 if (json.status) {
                     const data = json.data
-                    // setCommissionData(data[0].menuList)
                     setCommissionData(data[0].menuList)
-                    console.log('Commision Special Data', json.data);
                 } else {
                     console.log('Failed to List Commision Special Data:', json);
                 }
@@ -46,10 +43,8 @@ const InstritutionDetails = ({ route, navigation }) => {
                 console.error('List Commision Special Data Failed:', error.message);
             }
         };
-
         fetchCommission();
     }, []);
-    console.log('Commision Special Data', CommissionData);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -83,7 +78,6 @@ const InstritutionDetails = ({ route, navigation }) => {
             <Text style={styles.todayOrdersText}>Orders</Text>
 
             {/* Order List */}
-            {CommissionData.length >0 ? (
             <FlatList
                 data={CommissionData}
                 keyExtractor={(item, index) => index.toString()}
@@ -104,16 +98,12 @@ const InstritutionDetails = ({ route, navigation }) => {
                         </Text>
                     </View>
                 )}
-            /> ) : (
-                <View style= {{flex: 1, text: 'center',}}>
-                    <Text style={{fontSize: 18, fontWeight: 'bold'}}>No Commisions earned</Text>
-                </View>
-            )}
+            />
         </SafeAreaView>
     );
 };
 
-export default InstritutionDetails;
+export default historyDetails;
 
 const styles = StyleSheet.create({
     container: {

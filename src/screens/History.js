@@ -90,7 +90,7 @@ const History = ({ navigation }) => {
     );
 
     const renderStockOut = ({ item }) => (
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('historyDetails', {data: item})}>
             <View style={styles.itemContainer}>
                 <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.school_logo}` }} style={styles.logo} />
                 <View style={{ flex: 1 }}>
@@ -112,7 +112,7 @@ const History = ({ navigation }) => {
             const token = await AsyncStorage.getItem('userToken');
             const user = {
                 // vendor: 1,
-                vendor: "1,89",
+                vendor: "",
                 from_date: "2025-04-16",
                 to_date: "2025-04-16",
             }
@@ -164,8 +164,6 @@ const History = ({ navigation }) => {
                 toDate: "2024-09-17",
                 schools: "4",
             };
-            
-            console.log(user, "giugdiugjbdw")
     
             try {
                 const response = await fetch(
@@ -202,6 +200,8 @@ const History = ({ navigation }) => {
         fetchStockOut();
     }, []);
     
+
+    console.log("History  StockOut data: ",StockOut)
 
     return (
         <View style={styles.container}>
