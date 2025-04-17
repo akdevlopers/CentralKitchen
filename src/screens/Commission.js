@@ -4,84 +4,126 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { CommissionData, users } from '../Data/Data';
+import { users } from '../Data/Data';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const college = require('../../public/assets/college.png');
 
-const Commission = ({ navigation }) => {  
-  // FILTER DATA STARTS
-  const [visible, setVisible] = useState(false);
+const Commission = ({ navigation }) => {
+    // FILTER DATA STARTS
+    const [visible, setVisible] = useState(false);
 
-  const [vendors, setVendors] = useState([]);
-  const [institutions, setInstitutions] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedVendors, setSelectedVendors] = useState([]);
-  const [fromDate, setFromDate] = useState(new Date());
-  const [toDate, setToDate] = useState(new Date());
-  const [showFromPicker, setShowFromPicker] = useState(false);
-  const [showToPicker, setShowToPicker] = useState(false);
-  const [searchInstitution, setSearchInstitution] = useState('');
-  const [selectedInstitutions, setSelectedInstitutions] = useState([]);
+    const [vendors, setVendors] = useState([]);
+    const [institutions, setInstitutions] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedVendors, setSelectedVendors] = useState([]);
+    const [fromDate, setFromDate] = useState(new Date());
+    const [toDate, setToDate] = useState(new Date());
+    const [showFromPicker, setShowFromPicker] = useState(false);
+    const [showToPicker, setShowToPicker] = useState(false);
+    const [searchInstitution, setSearchInstitution] = useState('');
+    const [selectedInstitutions, setSelectedInstitutions] = useState([]);
 
-  const formatDate = (date) => {
-    const d = new Date(date);
-    return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getFullYear()}`;
-  };
+    const [CommissionData, setCommissionData] = useState({})
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedVendors([]);
-    setFromDate(new Date());
-    setToDate(new Date());
-    setSearchInstitution('');
-    setSelectedInstitutions([]);
-    setShowFromPicker(false);
-    setShowToPicker(false);
-  };
+    useEffect(() => {
+        const fetchCommissionData = async () => {
+            const token = await AsyncStorage.getItem('userToken');
+
+            try {
+                const response = await fetch(
+                    'https://teachercanteen.akprojects.co/api/v1/commissionsEarned',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+
+                        },
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const json = await response.json();
+
+                if (json.status) {
+                    setCommissionData(json)
+                    console.log('Commision Data', CommissionData);
+                } else {
+                    console.log('Failed to List Commision Data:', json);
+                }
+
+            } catch (error) {
+                console.error('List Commision Data Failed:', error.message);
+            }
+        };
+
+        fetchCommissionData();
+    }, []);
+
+    const formatDate = (date) => {
+        const d = new Date(date);
+        return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getFullYear()}`;
+    };
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setSelectedVendors([]);
+        setFromDate(new Date());
+        setToDate(new Date());
+        setSearchInstitution('');
+        setSelectedInstitutions([]);
+        setShowFromPicker(false);
+        setShowToPicker(false);
+    };
 
 
-  useEffect(() => {
-    const vendorSet = new Set();
-    const schoolSet = new Set();
+    useEffect(() => {
+        const vendorSet = new Set();
+        const schoolSet = new Set();
 
-    users.data.forEach(user => {
-      user.stockin.forEach(stock => {
-        vendorSet.add(stock.brand);
-      });
-      user.stockout.forEach(out => {
-        schoolSet.add(out.school);
-      });
-    });
+        users.data.forEach(user => {
+            user.stockin.forEach(stock => {
+                vendorSet.add(stock.brand);
+            });
+            user.stockout.forEach(out => {
+                schoolSet.add(out.school);
+            });
+        });
 
-    setVendors(Array.from(vendorSet));
-    setInstitutions(Array.from(schoolSet));
-  }, []);
+        setVendors(Array.from(vendorSet));
+        setInstitutions(Array.from(schoolSet));
+    }, []);
 
-  const filteredVendors = vendors.filter(v =>
-    v.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const toggleVendor = (vendor) => {
-    setSelectedVendors(prev =>
-      prev.includes(vendor)
-        ? prev.filter(v => v !== vendor)
-        : [...prev, vendor]
+    const filteredVendors = vendors.filter(v =>
+        v.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  };
 
-  // FILTER ENDS 
+    const toggleVendor = (vendor) => {
+        setSelectedVendors(prev =>
+            prev.includes(vendor)
+                ? prev.filter(v => v !== vendor)
+                : [...prev, vendor]
+        );
+    };
+
+    // FILTER ENDS 
 
     const renderStockOut = ({ item }) => (
         <TouchableOpacity onPress={() => navigation.navigate('CommissionDetail', { data: item })}>
             <View style={styles.itemContainer}>
-                <Image source={college} style={styles.logo} />
+                <Image source={{uri: `https://teachercanteen.akprojects.co/${item.school_logo}`}} style={styles.logo} />
                 <View style={{ flex: 1 }}>
-                    <Text style={styles.itemName}>{item.school}</Text>
-                    <Text style={styles.qty}>{item.location}</Text>
-                    <Text style={{}}>{item.date_time}</Text>
+                    <Text style={styles.itemName}>{item.school_name}</Text>
+                    <Text style={styles.qty}>{item.school_address}</Text>
+                    <Text style={{}}>{item.order_timestamp}</Text>
                 </View>
                 <View>
-                    <Text style={styles.date}>{item.amount}</Text>
+                    <Text style={styles.date}>RM0{item.rm_commission}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -128,7 +170,7 @@ const Commission = ({ navigation }) => {
             </View>
             <View style={styles.cardContainer}>
                 <Text style={styles.cardTitle}>Commission Earned</Text>
-                <Text style={styles.cardAmount}>RM50</Text>
+                <Text style={styles.cardAmount}>RM{CommissionData.total_commision}</Text>
             </View>
 
             <FlatList
@@ -550,199 +592,199 @@ const styles = StyleSheet.create({
         paddingTop: 10
     },
 
-    
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '60%',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 10,
-    padding: 20
-  },
-  closeIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#eee',
-    padding: 10,
-    borderRadius: 20,
-    zIndex: 10,
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15
-  },
-  label: {
-    marginTop: 10,
-    fontWeight: '600'
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 5
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-    width: '50%'
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 10
-  },
-  dateBox: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    width: '47%'
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10
-  },
-  tag: {
-    flexDirection: 'row',
-    backgroundColor: '#eee',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    margin: 3,
-    alignItems: 'center',
-    gap: 5
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20
-  },
-  clear: {
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    paddingHorizontal: 25,
-    paddingVertical: 10
-  },
-  filterBtn: {
-    backgroundColor: '#EA5B27',
-    borderRadius: 8,
-    paddingHorizontal: 25,
-    paddingVertical: 10
-  },
-  filterText: {
-    color: '#fff',
-    fontWeight: 'bold'
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 10,
-    padding: 20
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15
-  },
-  label: {
-    marginTop: 10,
-    fontWeight: '600'
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-    width: '50%'
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 10
-  },
-  dateBox: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    width: '47%'
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10
-  },
-  tag: {
-    flexDirection: 'row',
-    backgroundColor: '#eee',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    margin: 3,
-    alignItems: 'center',
-    gap: 5
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20
-  },
-  filterBtn: {
-    backgroundColor: '#EA5B27',
-    borderRadius: 8,
-    paddingHorizontal: 25,
-    paddingVertical: 10
-  },
-  filterText: {
-    color: '#fff',
-    fontWeight: 'bold'
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    flex: 1,
-  },
-  searchItem: {
-    padding: 10,
-    backgroundColor: '#eee',
-    borderRadius: 6,
-    marginVertical: 4,
-  },
 
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
-    gap: 8,
-  },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+    },
+    modalContainer: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: '60%',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        margin: 20,
+        borderRadius: 10,
+        padding: 20
+    },
+    closeIcon: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: '#eee',
+        padding: 10,
+        borderRadius: 20,
+        zIndex: 10,
+    },
+    heading: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 15
+    },
+    label: {
+        marginTop: 10,
+        fontWeight: '600'
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        padding: 10,
+        marginTop: 5
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
+        width: '50%'
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginVertical: 10
+    },
+    dateBox: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        padding: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        width: '47%'
+    },
+    tagContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 10
+    },
+    tag: {
+        flexDirection: 'row',
+        backgroundColor: '#eee',
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        margin: 3,
+        alignItems: 'center',
+        gap: 5
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20
+    },
+    clear: {
+        backgroundColor: '#eee',
+        borderRadius: 8,
+        paddingHorizontal: 25,
+        paddingVertical: 10
+    },
+    filterBtn: {
+        backgroundColor: '#EA5B27',
+        borderRadius: 8,
+        paddingHorizontal: 25,
+        paddingVertical: 10
+    },
+    filterText: {
+        color: '#fff',
+        fontWeight: 'bold'
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        margin: 20,
+        borderRadius: 10,
+        padding: 20
+    },
+    heading: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 15
+    },
+    label: {
+        marginTop: 10,
+        fontWeight: '600'
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
+        width: '50%'
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginVertical: 10
+    },
+    dateBox: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        padding: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        width: '47%'
+    },
+    tagContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 10
+    },
+    tag: {
+        flexDirection: 'row',
+        backgroundColor: '#eee',
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        margin: 3,
+        alignItems: 'center',
+        gap: 5
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20
+    },
+    filterBtn: {
+        backgroundColor: '#EA5B27',
+        borderRadius: 8,
+        paddingHorizontal: 25,
+        paddingVertical: 10
+    },
+    filterText: {
+        color: '#fff',
+        fontWeight: 'bold'
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        flex: 1,
+    },
+    searchItem: {
+        padding: 10,
+        backgroundColor: '#eee',
+        borderRadius: 6,
+        marginVertical: 4,
+    },
 
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#dfe6e9',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    margin: 4
-  },
+    tagContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 10,
+        gap: 8,
+    },
+
+    tag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#dfe6e9',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 20,
+        margin: 4
+    },
 })

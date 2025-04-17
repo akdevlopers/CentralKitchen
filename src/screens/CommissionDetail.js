@@ -1,11 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import college from '../../public/assets/college.png';
-import image from '../../public/assets/image.png';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const InstritutionDetails = ({ route, navigation }) => {
     const { data } = route.params;
+    const [CommissionData, setCommissionData] = useState({})
+
+    useEffect(() => {
+        const fetchCommission = async () => {
+            const token = await AsyncStorage.getItem('userToken');
+            const user = { mark_deliver_id: data.mark_deliver_id , school_id: data.school_id}
+
+            try {
+                const response = await fetch(
+                    'https://teachercanteen.akprojects.co/api/v1/commissionsEarnedMenu',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(user),
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const json = await response.json();
+
+                if (json.status) {
+                    const data = json.data
+                    setCommissionData(data[0].menuList)
+                    console.log('Commision Special Data', CommissionData);
+                } else {
+                    console.log('Failed to List Commision Special Data:', json);
+                }
+
+            } catch (error) {
+                console.error('List Commision Special Data Failed:', error.message);
+            }
+        };
+
+        fetchCommission();
+    }, []);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -19,20 +61,20 @@ const InstritutionDetails = ({ route, navigation }) => {
                 </TouchableOpacity>
             </View>
             <View style={styles.schoolCard}>
-                <Image source={college} style={styles.schoolLogo} />
+                <Image source={{uri: `https://teachercanteen.akprojects.co/${data.school_logo}`}} style={styles.schoolLogo} />
                 <View>
-                    <Text style={styles.schoolName}>{data.school}</Text>
-                    <Text style={styles.schoolLocation}>{data.location}</Text>
-                    <Text style={{}}>{data.date_time}</Text>
+                    <Text style={styles.schoolName}>{data.school_name}</Text>
+                    <Text style={styles.schoolLocation}>{data.school_address}</Text>
+                    <Text style={{}}>{data.order_timestamp}</Text>
                 </View>
                 <View>
-                    <Text style={styles.date}>{data.amount}</Text>
+                    <Text style={styles.date}>RM0{data.rm_commission}</Text>
                 </View>
             </View>
 
             <View style={styles.cardContainer}>
                 <Text style={styles.cardTitle}>Commission Earned</Text>
-                <Text style={styles.cardAmount}>RM50</Text>
+                <Text style={styles.cardAmount}>RM0{data.rm_commission}</Text>
             </View>
 
             {/* Title */}
@@ -40,22 +82,22 @@ const InstritutionDetails = ({ route, navigation }) => {
 
             {/* Order List */}
             <FlatList
-                data={data.order}
+                data={CommissionData}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.orderCard}>
-                        <Image source={image} style={styles.orderLogo} />
+                        <Image source={{uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}`}} style={styles.orderLogo} />
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.orderName}>{item.name}</Text>
-                            <Text style={styles.orderLocation}>{item.location}</Text>
+                            <Text style={styles.orderName}>{item.MenuTittleEnglish}</Text>
+                            <Text style={styles.orderLocation}>{item.BrandAddress}</Text>
 
                         </View>
                         <Text
                             style={[
                                 styles.orderStatus,
-                                { color: item.status === 'Delivered' ? 'green' : 'orange' },
+                                { color: item.ScanNewOrderStatus === 'Delivered' ? 'green' : 'orange' },
                             ]}>
-                            {item.status}
+                            {item.ScanNewOrderStatus}
                         </Text>
                     </View>
                 )}

@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { users } from '../Data/Data';
 
 const img = require('../../public/assets/image.png');
@@ -79,11 +80,11 @@ const History = ({ navigation }) => {
 
     const renderStockIn = ({ item }) => (
         <View style={styles.itemContainer}>
-            <Image source={img} style={styles.logo} />
+            <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}` }} style={styles.logo} />
             <View style={{ flex: 1 }}>
-                <Text style={styles.itemName}>{item.item}</Text>
-                <Text style={styles.qty}>Qty: {item.qty}</Text>
-                <Text style={styles.date}>{item.date}</Text>
+                <Text style={styles.itemName}>{item.MenuTittleEnglish}</Text>
+                <Text style={styles.qty}>Qty: {item.StockinQuantity}</Text>
+                <Text style={styles.date}>{item.StockinUpdated}</Text>
             </View>
         </View>
     );
@@ -91,11 +92,11 @@ const History = ({ navigation }) => {
     const renderStockOut = ({ item }) => (
         <TouchableOpacity>
             <View style={styles.itemContainer}>
-                <Image source={college} style={styles.logo} />
+                <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.school_logo}` }} style={styles.logo} />
                 <View style={{ flex: 1 }}>
-                    <Text style={styles.itemName}>{item.school}</Text>
-                    <Text style={styles.qty}>{item.location}</Text>
-                    <Text style={styles.date}>{item.qty}</Text>
+                    <Text style={styles.itemName}>{item.school_name}</Text>
+                    <Text style={styles.qty}>{item.school_address}</Text>
+                    <Text style={styles.date}>Qty: {item.pending_qty}</Text>
                 </View>
                 <View>
                     <Text style={styles[item.status]}>{item.status}</Text>
@@ -103,6 +104,104 @@ const History = ({ navigation }) => {
             </View>
         </TouchableOpacity>
     );
+
+    const [History, setHistory] = useState({})
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            const token = await AsyncStorage.getItem('userToken');
+            const user = {
+                // vendor: 1,
+                vendor: "1,89",
+                from_date: "2025-04-16",
+                to_date: "2025-04-16",
+            }
+            try {
+                const response = await fetch(
+                    'https://teachercanteen.akprojects.co/api/v1/histock-inList',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(user),
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const json = await response.json();
+
+                if (json.status) {
+                    setHistory(json.result)
+                    console.log('History Data', History);
+                } else {
+                    console.log('Failed to List History Data:', json);
+                }
+
+            } catch (error) {
+                console.error('List History Data Failed:', error.message);
+            }
+        };
+
+        fetchHistory();
+    }, []);
+
+
+
+    const [StockOut, setStockOut] = useState({})
+
+    useEffect(() => {
+        const fetchStockOut = async () => {
+            const token = await AsyncStorage.getItem('userToken');
+    
+            const user = {
+                fromDate: "2024-09-17",
+                toDate: "2024-09-17",
+                schools: "4",
+            };
+            
+            console.log(user, "giugdiugjbdw")
+    
+            try {
+                const response = await fetch(
+                    'https://teachercanteen.akprojects.co/api/v1/stockOutList',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(user)
+                    },
+                );
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+    
+                const json = await response.json();
+    
+                if (json.status) {
+                    setStockOut(json.data);
+                    console.log('StockOut Data', StockOut);
+                } else {
+                    console.log('Failed to List StockOut Data:', json);
+                }
+    
+            } catch (error) {
+                console.error('List StockOut Data Failed:', error.message);
+            }
+        };
+    
+        fetchStockOut();
+    }, []);
+    
 
     return (
         <View style={styles.container}>
@@ -165,13 +264,13 @@ const History = ({ navigation }) => {
             {/* List Section */}
             {activeTab === 'StockIn' ? (
                 <FlatList
-                    data={stockinData}
+                    data={History}
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={renderStockIn}
                 />
             ) : (
                 <FlatList
-                    data={stockoutData}
+                    data={StockOut}
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={renderStockOut}
                 />
