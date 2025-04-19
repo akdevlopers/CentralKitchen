@@ -8,8 +8,6 @@ import { users } from '../Data/Data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-const college = require('../../public/assets/college.png');
-
 const Commission = ({ navigation }) => {
     // FILTER DATA STARTS
     const [visible, setVisible] = useState(false);
@@ -27,8 +25,7 @@ const Commission = ({ navigation }) => {
 
     const [CommissionData, setCommissionData] = useState({})
     const [CommissionInstData, setCommissionInstData] = useState({})
-
-    const [StockOut, setStockOut] = useState({});
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         const fetchCommissionFilterData = async () => {
@@ -36,7 +33,7 @@ const Commission = ({ navigation }) => {
             const data = {
                 fromDate: formatDate(fromDate),
                 toDate: formatDate(toDate),
-                vendor: "4"
+                search: search,
             }
             console.log(data)
             try {
@@ -49,6 +46,7 @@ const Commission = ({ navigation }) => {
                             'Content-Type': 'application/json',
                             Authorization: `Bearer ${token}`,
                         },
+                        body: JSON.stringify(data)
                     },
                 );
 
@@ -71,7 +69,7 @@ const Commission = ({ navigation }) => {
         };
 
         fetchCommissionFilterData();
-    }, [fromDate, toDate]);
+    }, [fromDate, toDate, search]);
 
     const formatDate = (date) => {
         const d = new Date(date);
@@ -134,7 +132,7 @@ const Commission = ({ navigation }) => {
                             'Content-Type': 'application/json',
                             Authorization: `Bearer ${token}`,
                         },
-                        body: JSON.stringify(data)
+                        // body: JSON.stringify(data)
                     },
                 );
 
@@ -195,6 +193,8 @@ const Commission = ({ navigation }) => {
                     placeholder="Search History"
                     placeholderTextColor="#999"
                     style={styles.searchInput}
+                    onChangeText={setSearch}
+                    value={search}
                 />
             </View>
             <View style={styles.filterContainer}>
@@ -216,11 +216,11 @@ const Commission = ({ navigation }) => {
             </View>
             <View style={styles.cardContainer}>
                 <Text style={styles.cardTitle}>Commission Earned</Text>
-                <Text style={styles.cardAmount}>RM{CommissionData.total_commision}</Text>
+                <Text style={styles.cardAmount}>RM{CommissionInstData.total_commision}</Text>
             </View>
 
             <FlatList
-                data={CommissionData.data}
+                data={CommissionInstData.data}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={renderStockOut}
             />
@@ -309,7 +309,7 @@ const Commission = ({ navigation }) => {
                                     )}
 
 
-                                    <Text style={styles.label}>Institutions</Text>
+                                    {/* <Text style={styles.label}>Institutions</Text>
 
                                     <TextInput
                                         placeholder="Search institution"
@@ -351,7 +351,7 @@ const Commission = ({ navigation }) => {
                                                 </TouchableOpacity>
                                             </View>
                                         ))}
-                                    </View>
+                                    </View> */}
 
 
                                     {/* <View style={styles.checkboxContainer}>

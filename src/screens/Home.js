@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useRoute } from '@react-navigation/native';
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
+import {useRoute} from '@react-navigation/native';
 import {
   View,
   Text,
@@ -12,33 +12,37 @@ import {
   Modal,
   Alert,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { users } from '../Data/Data';
+import {users} from '../Data/Data';
 import img from '../../public/assets/image.png';
 import college from '../../public/assets/college.png';
 import Icon from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
+import Pagination from '../components/Pagination';
+import {
+  Camera,
+  useCameraDevice,
+  useCodeScanner,
+} from 'react-native-vision-camera';
 
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 
-
-const Home = ({ navigation }) => {
+const Home = ({navigation}) => {
   const [page, setPage] = useState('Home');
   const [qrModel, setQrModel] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [cameraPosition, setCameraPosition] = useState('back');
   const [canScan, setCanScan] = useState(true);
 
-  const [token, setToken] = useState('')
+  const [token, setToken] = useState('');
 
   const lastScannedCodeRef = useRef(null);
-
 
   // FILTER DATA STARTS
   const [visible, setVisible] = useState(false);
@@ -55,9 +59,11 @@ const Home = ({ navigation }) => {
   const [searchInstitution, setSearchInstitution] = useState('');
   const [selectedInstitutions, setSelectedInstitutions] = useState([]);
 
-  const formatDate = (date) => {
+  const formatDate = date => {
     const d = new Date(date);
-    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+    return `${d.getFullYear()}-${(d.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
   };
 
   const clearFilters = () => {
@@ -70,7 +76,6 @@ const Home = ({ navigation }) => {
     setShowFromPicker(false);
     setShowToPicker(false);
   };
-
 
   useEffect(() => {
     const vendorSet = new Set();
@@ -90,51 +95,48 @@ const Home = ({ navigation }) => {
   }, []);
 
   const filteredVendors = vendors.filter(v =>
-    v.toLowerCase().includes(searchTerm.toLowerCase())
+    v.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const toggleVendor = (vendor) => {
+  const toggleVendor = vendor => {
     setSelectedVendors(prev =>
       prev.includes(vendor)
         ? prev.filter(v => v !== vendor)
-        : [...prev, vendor]
+        : [...prev, vendor],
     );
   };
 
-  // FILTER ENDS 
-
+  // FILTER ENDS
 
   const route = useRoute();
   const user = route.params?.user;
 
-  const [currentValue, setCurrentValue] = useState('')
+  const [currentValue, setCurrentValue] = useState('');
 
   // Camera setup
   const device = useCameraDevice(cameraPosition);
   const camera = useRef(null);
 
-
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
-    onCodeScanned: (codes) => {
+    onCodeScanned: codes => {
       if (!canScan) return;
       const qrCode = codes.find(c => c.type === 'qr');
       if (qrCode?.value) {
         setCurrentValue(qrCode.value);
         // if (lastScannedCodeRef.current === currentValue) return;
         // lastScannedCodeRef.current = currentValue;
-        console.log(currentValue, 'From Home Page')
+        console.log(currentValue, 'From Home Page');
 
-        handleStockIn()
+        handleStockIn();
 
         setCanScan(false);
         setTimeout(() => {
           setCanScan(true);
         }, 3000);
       }
-    }
+    },
   });
-
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -155,7 +157,7 @@ const Home = ({ navigation }) => {
   }, []);
 
   const handleLogOut = async () => {
-    navigation.navigate("Login");
+    navigation.navigate('Login');
     await AsyncStorage.removeItem('userToken');
   };
 
@@ -166,8 +168,7 @@ const Home = ({ navigation }) => {
           <Text style={styles.noCameraText}>Camera device not found</Text>
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setQrModel(false)}
-          >
+            onPress={() => setQrModel(false)}>
             <Text style={styles.closeButtonText}>×</Text>
           </TouchableOpacity>
         </View>
@@ -198,8 +199,7 @@ const Home = ({ navigation }) => {
           {/* Close and Camera Flip Buttons */}
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setQrModel(false)}
-          >
+            onPress={() => setQrModel(false)}>
             <Text style={styles.closeButtonText}>×</Text>
           </TouchableOpacity>
 
@@ -207,8 +207,7 @@ const Home = ({ navigation }) => {
             style={styles.flipButton}
             onPress={() =>
               setCameraPosition(cameraPosition === 'back' ? 'front' : 'back')
-            }
-          >
+            }>
             <Ionicons name="camera-reverse-outline" size={30} color="#000" />
           </TouchableOpacity>
         </View>
@@ -221,17 +220,15 @@ const Home = ({ navigation }) => {
           </View>
         </Modal>
       </View>
-
     );
   };
 
-  const [notchVisible, setNotchVisible] = useState(false)
-
+  const [notchVisible, setNotchVisible] = useState(false);
 
   const handleStockIn = async () => {
-    setQrModel(true)
+    setQrModel(true);
     const token = await AsyncStorage.getItem('userToken');
-    const user = { sku: currentValue };
+    const user = {sku: currentValue};
     try {
       const response = await fetch(
         'https://teachercanteen.akprojects.co/api/v1/stock-in/scan',
@@ -252,16 +249,16 @@ const Home = ({ navigation }) => {
 
       const json = await response.json();
       if (json.status) {
-        setNotchVisible(true)
-        Alert.alert(json.message)
+        setNotchVisible(true);
+        Alert.alert(json.message);
         console.log('Stock In successfully:', json);
       } else {
-        Alert.alert(json.message)
+        Alert.alert(json.message);
         console.log('Failed to Stock In:', json);
       }
       setTimeout(() => {
-        setNotchVisible(false)
-      }, 1000)
+        setNotchVisible(false);
+      }, 1000);
       return json;
     } catch (error) {
       console.error('Stock In Failed:', error.message);
@@ -270,12 +267,14 @@ const Home = ({ navigation }) => {
 
   // User List
 
-  const [userData, setUserData] = useState({})
-  const [userDataError, setUserDataError] = useState()
-  const [FromHomeDate, setFromHomeDate] = useState(new Date())
-  const [ToHomeDate, setToHomeDate] = useState(new Date())
-  const [selectedBrand, setSelectedBrand] = useState("All");
+  const [userData, setUserData] = useState({});
+  const [userDataError, setUserDataError] = useState();
+  const [FromHomeDate, setFromHomeDate] = useState(new Date());
+  const [ToHomeDate, setToHomeDate] = useState(new Date());
+  const [selectedBrand, setSelectedBrand] = useState('All');
   const [selectedBrandId, setSelectedBrandId] = useState();
+  const [loading, setLoading] = useState(false);
+  const [homeSearch, setHomeSearch] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -285,9 +284,10 @@ const Home = ({ navigation }) => {
           vendor: selectedBrandId,
           from_date: formatDate(fromDate),
           to_date: formatDate(toDate),
-        }
-        console.log("Home Filter Data", data)
-
+          search: homeSearch,
+        };
+        console.log('Home Filter Data', data);
+        // setLoading(true);
         try {
           const response = await fetch(
             'https://teachercanteen.akprojects.co/api/v1/stock-inList?vendor=all',
@@ -298,8 +298,8 @@ const Home = ({ navigation }) => {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
               },
-              body: JSON.stringify(data)
-            }
+              body: JSON.stringify(data),
+            },
           );
 
           if (!response.ok) {
@@ -309,53 +309,57 @@ const Home = ({ navigation }) => {
           const json = await response.json();
           if (json.status) {
             setUserData(json.result);
-            setUserDataError(json.status)
+            setUserDataError(json.status);
+            setLoading(false);
           } else {
-            setUserDataError(json.status)
+            setUserDataError(json.status);
             console.log('Failed to Stock In:', json);
+            setLoading(false);
           }
         } catch (error) {
           console.error('Stock In Failed:', error.message);
+          setLoading(false);
         }
       };
       fetchData();
-    }, [selectedBrand, fromDate, toDate])
+    }, [selectedBrand, fromDate, toDate, homeSearch]),
   );
   console.log('List User:', userData);
 
   // Instritutions List
-  const [instDate, setInstDate] = useState(new Date())
-  const [instritutions, setInstritutions] = useState({})
-  const [selectedStatusBrand, setSelectedStatusBrand] = useState("All");
-  const [selectedStatusBrandId, setSelectedStatusBrandId] = useState();
-  
-console.log(selectedStatusBrandId, "gaysufkyk")
-  
+  const [instDate, setInstDate] = useState(new Date());
+  const [instritutions, setInstritutions] = useState({});
+  const [selectedStatusBrand, setSelectedStatusBrand] = useState('All');
+  const [selectedStatusBrandId, setSelectedStatusBrandId] = useState('0,1');
+  const [instSearch, setInstSearch] = useState('');
+
   const instListStatus = [
     {
-        "StatusID": "",
-        "StatusName": "All"
+      StatusID: '0,1',
+      StatusName: 'All',
     },
     {
-        "StatusID": 1,
-        "StatusName": "Delivered"
+      StatusID: 1,
+      StatusName: 'Delivered',
     },
     {
-        "StatusID": 0,
-        "StatusName": "Pending"
-    }
-]
+      StatusID: 0,
+      StatusName: 'Pending',
+    },
+  ];
 
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
         const token = await AsyncStorage.getItem('userToken');
-        const user = { 
+        const user = {
           order_date: formatDate(instDate),
-          status: selectedStatusBrandId
-         };
+          status: selectedStatusBrandId,
+          search: instSearch,
+        };
 
-        console.log("DONO", user);
+        console.log('DONO', user);
+        // setLoading(true);
         try {
           const response = await fetch(
             'https://teachercanteen.akprojects.co/api/v1/institutionList',
@@ -367,7 +371,7 @@ console.log(selectedStatusBrandId, "gaysufkyk")
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify(user),
-            }
+            },
           );
 
           if (!response.ok) {
@@ -377,20 +381,23 @@ console.log(selectedStatusBrandId, "gaysufkyk")
           const json = await response.json();
           if (json.status) {
             setInstritutions(json.data);
+            setLoading(false);
             console.log('Institution Data:', json.data);
           } else {
+            setLoading(false);
             console.log('Failed Fetch Institution Data:', json);
           }
         } catch (error) {
+          setLoading(false);
           console.error('Institution data fetch Failed:', error.message);
         }
       };
 
       fetchData();
-    }, [instDate, selectedStatusBrandId])
+    }, [instDate, selectedStatusBrandId, instSearch]),
   );
 
-  const [FliterList, setFliterList] = useState({})
+  const [FliterList, setFliterList] = useState({});
 
   useEffect(() => {
     const fetchFilterHome = async () => {
@@ -405,7 +412,7 @@ console.log(selectedStatusBrandId, "gaysufkyk")
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -429,12 +436,10 @@ console.log(selectedStatusBrandId, "gaysufkyk")
 
   const brandListWithAll = useMemo(() => {
     if (Array.isArray(FliterList)) {
-      return [{ BrandID: '', BrandName: 'All' }, ...FliterList];
+      return [{BrandID: '', BrandName: 'All'}, ...FliterList];
     }
-    return [{ BrandID: '', BrandName: 'All' }];
+    return [{BrandID: '', BrandName: 'All'}];
   }, [FliterList]);
-
-
 
   // const [FliterInstList, setFliterInstList] = useState({})
 
@@ -482,32 +487,70 @@ console.log(selectedStatusBrandId, "gaysufkyk")
   // }, [FliterList]);
 
   const today = new Date();
-  const options = { day: 'numeric', month: 'long', year: 'numeric' };
+  const options = {day: 'numeric', month: 'long', year: 'numeric'};
   const formattedDate = today.toLocaleDateString('en-US', options);
+  const [profileData, setProfileData] = useState([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchProfileData = async () => {
+        const token = await AsyncStorage.getItem('userToken');
+        try {
+          const response = await fetch(
+            'https://teachercanteen.akprojects.co/api/v1/profile',
+            {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const json = await response.json();
+          if (json.status) {
+            setProfileData(json.user);
+            console.log('Profile Data:', json);
+          } else {
+            console.log('Failed Fetch Profile Data:', json);
+          }
+        } catch (error) {
+          console.error('Profile Data fetch Failed:', error.message);
+        }
+      };
+
+      fetchProfileData();
+    }, []),
+  );
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>
-          <Text style={{ color: '#3E4A59' }}>Central </Text>
-          <Text style={{ color: '#FF5C00' }}>Kitchen</Text>
+          <Text style={{color: '#3E4A59'}}>Central </Text>
+          <Text style={{color: '#FF5C00'}}>Kitchen</Text>
         </Text>
         <TouchableOpacity
           style={{
-            display: page === "Home" ? "flex" : "none",
+            display: page === 'Home' ? 'flex' : 'none',
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: '#fff',
             alignSelf: 'flex-start',
-            margin: 10
+            margin: 10,
           }}
-          onPress={() => setQrModel(true)}
-        >
+          onPress={() => setQrModel(true)}>
           <Ionicons name="add-outline" size={20} color="#E85C33" />
-          <Text style={{ marginLeft: 6, color: '#E85C33', fontWeight: 'bold' }}>Add</Text>
+          <Text style={{marginLeft: 6, color: '#E85C33', fontWeight: 'bold'}}>
+            Add
+          </Text>
         </TouchableOpacity>
-
       </View>
 
       {/* QR Scanner Modal */}
@@ -515,17 +558,17 @@ console.log(selectedStatusBrandId, "gaysufkyk")
         visible={qrModel}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setQrModel(false)}
-      >
+        onRequestClose={() => setQrModel(false)}>
         {hasPermission ? (
           <QRScannerModal />
         ) : (
           <View style={styles.permissionView}>
-            <Text style={styles.permissionText}>Camera permission not granted</Text>
+            <Text style={styles.permissionText}>
+              Camera permission not granted
+            </Text>
             <TouchableOpacity
               style={styles.permissionButton}
-              onPress={() => setQrModel(false)}
-            >
+              onPress={() => setQrModel(false)}>
               <Text style={styles.permissionButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -533,29 +576,53 @@ console.log(selectedStatusBrandId, "gaysufkyk")
       </Modal>
 
       {/* Search */}
-      <View style={page !== "Home" && page !== "Instritution" ? { display: "none" } : {}}>
+      {/* <View
+        style={
+          page !== 'Home' && page !== 'Instritution' ? {display: 'none'} : {}
+        }>
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#ccc" />
           <TextInput
-            placeholder={page === "Home" ? "Search Food" : page === "Instritution" ? "Search Instritution" : ""}
+            placeholder={
+              page === 'Home'
+                ? 'Search Food'
+                : page === 'Instritution'
+                ? 'Search Instritution'
+                : ''
+            }
             placeholderTextColor="#999"
             style={styles.searchInput}
           />
         </View>
-      </View>
+      </View> */}
 
       {/* Page Content */}
       {page === 'Home' ? (
         <>
+          <View
+            style={
+              page !== 'Home' && page !== 'Instritution'
+                ? {display: 'none'}
+                : {}
+            }>
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color="#ccc" />
+              <TextInput
+                placeholder={'Search Food'}
+                placeholderTextColor="#999"
+                style={styles.searchInput}
+                onChangeText={setHomeSearch}
+                value={homeSearch}
+              />
+            </View>
+          </View>
           {/* Home Page Filters */}
           <View style={styles.filterContainer}>
-
             <View style={styles.vendorFilterContainer}>
               <Text style={styles.label}>Vendor</Text>
               <TouchableOpacity
                 style={styles.vendorDropdownButton}
-                onPress={() => setVisible(true)}
-              >
+                onPress={() => setVisible(true)}>
                 <Text style={styles.vendorDropdownText}>{selectedBrand}</Text>
                 <AntDesign name="down" size={14} color="#555" />
               </TouchableOpacity>
@@ -565,18 +632,16 @@ console.log(selectedStatusBrandId, "gaysufkyk")
                 visible={visible}
                 transparent
                 animationType="fade"
-                onRequestClose={() => setVisible(false)}
-              >
+                onRequestClose={() => setVisible(false)}>
                 <TouchableOpacity
                   style={styles.vendorModalOverlay}
                   onPress={() => setVisible(false)}
-                  activeOpacity={1}
-                >
+                  activeOpacity={1}>
                   <View style={styles.vendorDropdownMenu}>
                     <FlatList
                       data={brandListWithAll}
                       keyExtractor={(item, index) => `${item.BrandID}-${index}`}
-                      renderItem={({ item }) => (
+                      renderItem={({item}) => (
                         <TouchableOpacity
                           style={styles.vendorDropdownItem}
                           onPress={() => {
@@ -588,14 +653,11 @@ console.log(selectedStatusBrandId, "gaysufkyk")
                               setSelectedBrandId(item.BrandID);
                             }
                             setVisible(false);
-                          }}
-                        >
+                          }}>
                           <Text>{item.BrandName}</Text>
                         </TouchableOpacity>
                       )}
                     />
-
-
                   </View>
                 </TouchableOpacity>
               </Modal>
@@ -605,9 +667,17 @@ console.log(selectedStatusBrandId, "gaysufkyk")
 
             <View style={styles.filterBoxDate}>
               <Text style={styles.label}>Date Range</Text>
-              <TouchableOpacity style={styles.dateBoxInst} onPress={() => setDateVisible(true)}>
+              <TouchableOpacity
+                style={styles.dateBoxInst}
+                onPress={() => setDateVisible(true)}>
                 <Ionicons name="calendar-outline" size={20} color="gray" />
-                <Text>{formatDate(toDate)} - {formatDate(toDate)}</Text>
+                <Text>
+                  <Text>
+                    {formatDate(fromDate) === formatDate(toDate)
+                      ? `${formatDate(fromDate)}`
+                      : `${formatDate(fromDate)} - ${formatDate(toDate)}`}
+                  </Text>
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -618,10 +688,7 @@ console.log(selectedStatusBrandId, "gaysufkyk")
                 <Text>{formatDate(HomeDate)}</Text>
               </TouchableOpacity>
             </View> */}
-
           </View>
-
-
 
           {/* {showToPicker && (
             <DateTimePicker
@@ -639,44 +706,85 @@ console.log(selectedStatusBrandId, "gaysufkyk")
 
           {/* List */}
           {userDataError ? (
-            <FlatList
-              data={userData}
-              keyExtractor={item => item.StockinID.toString()}
-              renderItem={({ item }) => (
-                <View style={styles.itemContainer}>
-                  <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}` }} style={styles.logo} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.itemName}>{item.MenuTittleEnglish}</Text>
-                    <Text style={styles.qty}>Qty : {item.StockinQuantity}</Text>
-                    <Text style={styles.date}>{item.StockinUpdated}</Text>
+            <>
+              <FlatList
+                data={userData}
+                keyExtractor={item => item.StockinID.toString()}
+                renderItem={({item}) => (
+                  <View style={styles.itemContainer}>
+                    <Image
+                      source={{
+                        uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}`,
+                      }}
+                      style={styles.logo}
+                    />
+                    <View style={{flex: 1}}>
+                      <Text style={styles.itemName}>
+                        {item.MenuTittleEnglish}
+                      </Text>
+                      <Text style={styles.qty}>
+                        Qty : {item.StockinQuantity}
+                      </Text>
+                      <Text style={styles.date}>{item.StockinUpdated}</Text>
+                    </View>
                   </View>
-                </View>
-              )}
-            />) : (
-            <View style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Text style={{
-                fontSize: 20,
-                fontWeight: 'bold'
-              }}>No records found.</Text>
+                )}
+              />
+              {/* <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Pagination setLength={7} />
+              </View> */}
+            </>
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                }}>
+                No records found.
+              </Text>
             </View>
-          )
-          }
+          )}
         </>
-      ) : page === "Instritution" ? (
+      ) : page === 'Instritution' ? (
         <>
+          <View
+            style={
+              page !== 'Home' && page !== 'Instritution'
+                ? {display: 'none'}
+                : {}
+            }>
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color="#ccc" />
+              <TextInput
+                placeholder={'Search Instritution'}
+                placeholderTextColor="#999"
+                style={styles.searchInput}
+                onChangeText={setInstSearch}
+                value={instSearch}
+              />
+            </View>
+          </View>
           {/* Filters */}
           <View style={styles.filterContainer}>
-          <View style={styles.vendorFilterContainer}>
+            <View style={styles.vendorFilterContainer}>
               <Text style={styles.label}>Vendor</Text>
               <TouchableOpacity
                 style={styles.vendorDropdownButton}
-                onPress={() => setVisible(true)}
-              >
-                <Text style={styles.vendorDropdownText}>{selectedStatusBrand}</Text>
+                onPress={() => setVisible(true)}>
+                <Text style={styles.vendorDropdownText}>
+                  {selectedStatusBrand}
+                </Text>
                 <AntDesign name="down" size={14} color="#555" />
               </TouchableOpacity>
 
@@ -685,18 +793,18 @@ console.log(selectedStatusBrandId, "gaysufkyk")
                 visible={visible}
                 transparent
                 animationType="fade"
-                onRequestClose={() => setVisible(false)}
-              >
+                onRequestClose={() => setVisible(false)}>
                 <TouchableOpacity
                   style={styles.vendorModalOverlay}
                   onPress={() => setVisible(false)}
-                  activeOpacity={1}
-                >
+                  activeOpacity={1}>
                   <View style={styles.vendorDropdownMenu}>
                     <FlatList
                       data={instListStatus}
-                      keyExtractor={(item, index) => `${item.StatusID}-${index}`}
-                      renderItem={({ item }) => (
+                      keyExtractor={(item, index) =>
+                        `${item.StatusID}-${index}`
+                      }
+                      renderItem={({item}) => (
                         <TouchableOpacity
                           style={styles.vendorDropdownItem}
                           onPress={() => {
@@ -708,14 +816,11 @@ console.log(selectedStatusBrandId, "gaysufkyk")
                               setSelectedStatusBrandId(item.StatusID);
                             }
                             setVisible(false);
-                          }}
-                        >
+                          }}>
                           <Text>{item.StatusName}</Text>
                         </TouchableOpacity>
                       )}
                     />
-
-
                   </View>
                 </TouchableOpacity>
               </Modal>
@@ -723,7 +828,9 @@ console.log(selectedStatusBrandId, "gaysufkyk")
 
             <View style={styles.filterBoxDate}>
               <Text style={styles.label}>Date Range</Text>
-              <TouchableOpacity style={styles.dateBoxInst} onPress={() => setShowToPicker(true)}>
+              <TouchableOpacity
+                style={styles.dateBoxInst}
+                onPress={() => setShowToPicker(true)}>
                 <Ionicons name="calendar-outline" size={20} color="gray" />
                 <Text>{formatDate(instDate)}</Text>
               </TouchableOpacity>
@@ -737,7 +844,7 @@ console.log(selectedStatusBrandId, "gaysufkyk")
               display="default"
               onChange={(event, selectedDate) => {
                 setShowToPicker(false);
-                if (event.type === "set" && selectedDate) {
+                if (event.type === 'set' && selectedDate) {
                   setInstDate(selectedDate);
                 }
               }}
@@ -745,41 +852,79 @@ console.log(selectedStatusBrandId, "gaysufkyk")
           )}
 
           {/* Instritutions List */}
-          <FlatList
-            data={instritutions}
-            keyExtractor={item => item.school_id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => navigation.navigate('InstritutionDetails', { data: item, date: formatDate(instDate) })}>
-                <View style={styles.itemContainer}>
-                  <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.school_logo}` }} style={styles.logo} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.itemName}>{item.school_name}</Text>
-                    <Text style={styles.qty}>{item.school_address}</Text>
-                    <Text style={styles.date}>Qty: {item.qty}</Text>
+
+          {instritutions.length > 0 ? (
+            <FlatList
+              data={instritutions}
+              keyExtractor={item => item.school_id.toString()}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('InstritutionDetails', {
+                      data: item,
+                      date: formatDate(instDate),
+                    })
+                  }>
+                  <View style={styles.itemContainer}>
+                    <Image
+                      source={{
+                        uri: `https://teachercanteen.akprojects.co/${item.school_logo}`,
+                      }}
+                      style={styles.logo}
+                    />
+                    <View style={{flex: 1}}>
+                      <Text style={styles.itemName}>{item.school_name}</Text>
+                      <Text style={styles.qty}>{item.school_address}</Text>
+                      <Text style={styles.date}>Qty: {item.qty}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles[item.status]}>{item.status}</Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles[item.status]}>{item.status}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
+                </TouchableOpacity>
+              )}
+            />
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                }}>
+                No records found.
+              </Text>
+            </View>
+          )}
+          
         </>
       ) : (
         <>
           <ScrollView style={styles.container}>
-            {user &&
+            {profileData && (
               <View style={styles.profileSection}>
                 <View style={styles.avatar} />
-                <Text style={styles.name}>{user.name || "User"}</Text>
-                <Text style={styles.email}>{user.email || "No Email"}</Text>
+                <Text style={styles.name}>
+                  {profileData.EmployeeName || 'User'}
+                </Text>
+                <Text style={styles.email}>
+                  {profileData.EmployeeEmail || 'No Email'}
+                </Text>
 
-                <TouchableOpacity style={styles.editProfileButton} onPress={() => navigation.navigate('EditProfile', { user })}>
+                <TouchableOpacity
+                  style={styles.editProfileButton}
+                  onPress={() =>
+                    navigation.navigate('EditProfile', {profileData})
+                  }>
                   <Text style={styles.editProfileText}>Edit Profile</Text>
                   <Icon name="arrow-right" size={16} color="#fff" />
                 </TouchableOpacity>
               </View>
-            }
+            )}
 
             <View style={styles.menuItem}>
               <View style={styles.row}>
@@ -818,7 +963,9 @@ console.log(selectedStatusBrandId, "gaysufkyk")
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogOut}>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogOut}>
               <Icon name="log-out" size={20} color="#d9534f" />
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
@@ -831,10 +978,12 @@ console.log(selectedStatusBrandId, "gaysufkyk")
       <Modal visible={dateVisible} animationType="slide" transparent>
         <TouchableWithoutFeedback onPress={() => setDateVisible(false)}>
           <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => { }}>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View style={styles.modalContainer}>
                 <View style={styles.modalContent}>
-                  <TouchableOpacity style={styles.closeIcon} onPress={() => setDateVisible(false)}>
+                  <TouchableOpacity
+                    style={styles.closeIcon}
+                    onPress={() => setDateVisible(false)}>
                     <Ionicons name="close" size={24} color="black" />
                   </TouchableOpacity>
 
@@ -842,13 +991,25 @@ console.log(selectedStatusBrandId, "gaysufkyk")
 
                   <Text style={styles.label}>Date Range</Text>
                   <View style={styles.dateContainer}>
-                    <TouchableOpacity style={styles.dateBox} onPress={() => setShowFromPicker(true)}>
-                      <Ionicons name="calendar-outline" size={20} color="gray" />
+                    <TouchableOpacity
+                      style={styles.dateBox}
+                      onPress={() => setShowFromPicker(true)}>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={20}
+                        color="gray"
+                      />
                       <Text>{formatDate(fromDate)}</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.dateBox} onPress={() => setShowToPicker(true)}>
-                      <Ionicons name="calendar-outline" size={20} color="gray" />
+                    <TouchableOpacity
+                      style={styles.dateBox}
+                      onPress={() => setShowToPicker(true)}>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={20}
+                        color="gray"
+                      />
                       <Text>{formatDate(toDate)}</Text>
                     </TouchableOpacity>
                   </View>
@@ -882,7 +1043,9 @@ console.log(selectedStatusBrandId, "gaysufkyk")
                       <Text style={styles.clear}>Clear Filter</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.filterBtn} onPress={() => setDateVisible(false)}>
+                    <TouchableOpacity
+                      style={styles.filterBtn}
+                      onPress={() => setDateVisible(false)}>
                       <Text style={styles.filterText}>Filter</Text>
                     </TouchableOpacity>
                   </View>
@@ -895,21 +1058,64 @@ console.log(selectedStatusBrandId, "gaysufkyk")
 
       {/* Bottom Navigation */}
       <View style={styles.bottomTabContainer}>
-        <TouchableOpacity style={styles.tabItem} onPress={() => setPage("Home")}>
-          <Ionicons name="home" size={24} color={page === 'Home' ? '#E85C33' : '#000'} />
-          <Text style={page === 'Home' ? styles.tabLabel : styles.tabLabelNone}>{page === 'Home' && 'Stocks'}</Text>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => setPage('Home')}>
+          <Ionicons
+            name="home"
+            size={24}
+            color={page === 'Home' ? '#E85C33' : '#000'}
+          />
+          <Text style={page === 'Home' ? styles.tabLabel : styles.tabLabelNone}>
+            {page === 'Home' && 'Stocks'}
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => setPage("Instritution")}>
-          <Ionicons name="pricetag" size={24} color={page === 'Instritution' ? '#E85C33' : '#000'} />
-          <Text style={page === 'Instritution' ? styles.tabLabel : styles.tabLabelNone}>{page === 'Instritution' && 'Instritution'}</Text>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => setPage('Instritution')}>
+          <Ionicons
+            name="pricetag"
+            size={24}
+            color={page === 'Instritution' ? '#E85C33' : '#000'}
+          />
+          <Text
+            style={
+              page === 'Instritution' ? styles.tabLabel : styles.tabLabelNone
+            }>
+            {page === 'Instritution' && 'Instritution'}
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => setPage("Profile")}>
-          <Ionicons name="person" size={24} color={page === 'Profile' ? '#E85C33' : '#000'} />
-          <Text style={page === 'Profile' ? styles.tabLabel : styles.tabLabelNone}>{page === 'Profile' && 'Account'}</Text>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => setPage('Profile')}>
+          <Ionicons
+            name="person"
+            size={24}
+            color={page === 'Profile' ? '#E85C33' : '#000'}
+          />
+          <Text
+            style={page === 'Profile' ? styles.tabLabel : styles.tabLabelNone}>
+            {page === 'Profile' && 'Account'}
+          </Text>
         </TouchableOpacity>
       </View>
+
+      {loading && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={true}
+          onRequestClose={() => {}}>
+          <View style={styles.LoadmodalContainer}>
+            <View style={styles.loaderBox}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -969,7 +1175,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    width: '100%'
+    width: '100%',
   },
   label: {
     marginBottom: 6,
@@ -1006,7 +1212,7 @@ const styles = StyleSheet.create({
     height: 50,
     marginRight: 10,
     resizeMode: 'contain',
-    borderRadius: 50
+    borderRadius: 50,
   },
   itemName: {
     fontWeight: 'bold',
@@ -1033,10 +1239,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#ddd',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    width: "100%"
+    width: '100%',
     // elevation: 8,
   },
   tabItem: {
@@ -1165,7 +1371,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   maskSide: {
-    width: (StyleSheet.hairlineWidth * 1000), // Auto fill based on screen
+    width: StyleSheet.hairlineWidth * 1000, // Auto fill based on screen
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     height: 250,
   },
@@ -1177,11 +1383,11 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     padding: 15,
     elevation: 5,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },
-  // ---  
+  // ---
   closeButton: {
     position: 'absolute',
     top: 50,
@@ -1245,7 +1451,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     margin: 20,
     borderRadius: 10,
-    padding: 20
+    padding: 20,
   },
   closeIcon: {
     position: 'absolute',
@@ -1259,29 +1465,29 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15
+    marginBottom: 15,
   },
   label: {
     marginTop: 10,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 10,
-    marginTop: 5
+    marginTop: 5,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
-    width: '50%'
+    width: '50%',
   },
   dateContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 10
+    marginVertical: 10,
   },
   dateBox: {
     borderWidth: 1,
@@ -1291,12 +1497,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    width: '47%'
+    width: '47%',
   },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 10
+    marginTop: 10,
   },
   tag: {
     flexDirection: 'row',
@@ -1306,61 +1512,61 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     margin: 3,
     alignItems: 'center',
-    gap: 5
+    gap: 5,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20
+    marginTop: 20,
   },
   clear: {
     backgroundColor: '#eee',
     borderRadius: 8,
     paddingHorizontal: 25,
-    paddingVertical: 10
+    paddingVertical: 10,
   },
   filterBtn: {
     backgroundColor: '#EA5B27',
     borderRadius: 8,
     paddingHorizontal: 25,
-    paddingVertical: 10
+    paddingVertical: 10,
   },
   filterText: {
     color: '#fff',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   modalContent: {
     backgroundColor: '#fff',
     margin: 20,
     borderRadius: 10,
-    padding: 20
+    padding: 20,
   },
   heading: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15
+    marginBottom: 15,
   },
   label: {
     marginTop: 10,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 10,
-    marginTop: 5
+    marginTop: 5,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
-    width: '50%'
+    width: '50%',
   },
   dateContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 10
+    marginVertical: 10,
   },
   dateBox: {
     borderWidth: 1,
@@ -1370,12 +1576,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    width: '47%'
+    width: '47%',
   },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 10
+    marginTop: 10,
   },
   tag: {
     flexDirection: 'row',
@@ -1385,22 +1591,22 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     margin: 3,
     alignItems: 'center',
-    gap: 5
+    gap: 5,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20
+    marginTop: 20,
   },
   filterBtn: {
     backgroundColor: '#EA5B27',
     borderRadius: 8,
     paddingHorizontal: 25,
-    paddingVertical: 10
+    paddingVertical: 10,
   },
   filterText: {
     color: '#fff',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -1429,7 +1635,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
-    margin: 4
+    margin: 4,
   },
 
   notchOverlay: {
@@ -1446,7 +1652,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     elevation: 6, // Android shadow
     shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
@@ -1457,15 +1663,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-
   vendorFilterContainer: {
     // marginBottom: 10,
-    width: "50%"
+    width: '50%',
   },
   vendorLabel: {
     fontSize: 16,
     marginBottom: 5,
-    fontWeight: "bold"
+    fontWeight: 'bold',
   },
   vendorDropdownButton: {
     flexDirection: 'row',
@@ -1488,7 +1693,7 @@ const styles = StyleSheet.create({
     // justifyContent: 'center',
     paddingVertical: 230,
     paddingLeft: 18,
-    paddingRight: 200
+    paddingRight: 200,
   },
   vendorDropdownMenu: {
     backgroundColor: '#fff',
@@ -1500,6 +1705,23 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  LoadmodalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderBox: {
+    backgroundColor: '#333',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
   },
 });
 

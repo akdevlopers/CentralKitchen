@@ -105,7 +105,7 @@ const InstritutionDetails = ({ route, navigation }) => {
                     </View>
                 )}
             /> ) : (
-                <View style= {{flex: 1, text: 'center',}}>
+                <View style= {{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
                     <Text style={{fontSize: 18, fontWeight: 'bold'}}>No Commisions earned</Text>
                 </View>
             )}
