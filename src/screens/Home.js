@@ -229,6 +229,7 @@ const Home = ({navigation}) => {
     setQrModel(true);
     const token = await AsyncStorage.getItem('userToken');
     const user = {sku: currentValue};
+    console.log(user)
     try {
       const response = await fetch(
         'https://teachercanteen.akprojects.co/api/v1/stock-in/scan',
