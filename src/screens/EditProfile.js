@@ -87,7 +87,7 @@ const ProfilePage = ({navigation}) => {
     };
     try {
       const response = await fetch(
-        'https://teachercanteen.akprojects.co/api/v1/profile',
+        'https://teachercanteen.akprojects.co/api/v1/profile-update',
         {
           method: 'POST',
           headers: {
