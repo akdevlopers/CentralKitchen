@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, FlatList, SafeAreaView, TouchableOpacity
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const historyDetails = ({ route, navigation }) => {
+const HistoryDetails = ({ route, navigation }) => {
     const { data } = route.params;
     const [CommissionData, setCommissionData] = useState({})
 
@@ -103,7 +103,7 @@ const historyDetails = ({ route, navigation }) => {
     );
 };
 
-export default historyDetails;
+export default HistoryDetails;
 
 const styles = StyleSheet.create({
     container: {

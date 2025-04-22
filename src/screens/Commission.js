@@ -363,7 +363,7 @@ const Commission = ({ navigation }) => {
                                             <Text style={styles.clear}>Clear Filter</Text>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.filterBtn}>
+                                        <TouchableOpacity style={styles.filterBtn} onPress={() => setVisible(false)}>
                                             <Text style={styles.filterText}>Filter</Text>
                                         </TouchableOpacity>
                                     </View>

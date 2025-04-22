@@ -157,15 +157,31 @@ const Home = ({navigation}) => {
   }, []);
 
   const handleLogOut = async () => {
-    navigation.navigate('Login');
     await AsyncStorage.removeItem('userToken');
+    setTimeout(() => {
+      navigation.navigate('Login');
+    }, 600);
   };
 
   const QRScannerModal = () => {
     if (device == null) {
       return (
         <View style={styles.noCameraView}>
-          <Text style={styles.noCameraText}>Camera device not found</Text>
+          <Text style={styles.noCameraText}>
+            Camera device not found. Please Login Again
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'red',
+              padding: 10,
+              borderRadius: 10,
+              marginTop: 20,
+            }}
+            onPress={() => navigation.navigate('Login')}>
+            <Text style={{color: '#fff', fontWeight: 'bold', fontSize: 16}}>
+              Login
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setQrModel(false)}>
@@ -224,15 +240,16 @@ const Home = ({navigation}) => {
   };
 
   const [notchVisible, setNotchVisible] = useState(false);
+  const [reload, setReload] = useState(true);
 
   const handleStockIn = async () => {
     setQrModel(true);
     const token = await AsyncStorage.getItem('userToken');
     const user = {sku: currentValue};
-    console.log(user)
+    console.log(user);
     try {
       const response = await fetch(
-        'https://teachercanteen.akprojects.co/api/v1/stock-in/scan',
+        'https://teachercanteen.akprojects.co/api/v1/stock-inScan',
         {
           method: 'POST',
           headers: {
@@ -251,7 +268,8 @@ const Home = ({navigation}) => {
       const json = await response.json();
       if (json.status) {
         setNotchVisible(true);
-        Alert.alert(json.message);
+        // Alert.alert(json.message);
+        // setReload(json.status)
         console.log('Stock In successfully:', json);
       } else {
         Alert.alert(json.message);
@@ -259,6 +277,7 @@ const Home = ({navigation}) => {
       }
       setTimeout(() => {
         setNotchVisible(false);
+        setReload(!reload);
       }, 1000);
       return json;
     } catch (error) {
@@ -323,9 +342,10 @@ const Home = ({navigation}) => {
         }
       };
       fetchData();
-    }, [selectedBrand, fromDate, toDate, homeSearch]),
+    }, [selectedBrand, fromDate, toDate, homeSearch, currentValue, reload]),
   );
   console.log('List User:', userData);
+  console.log(reload);
 
   // Instritutions List
   const [instDate, setInstDate] = useState(new Date());
@@ -901,7 +921,6 @@ const Home = ({navigation}) => {
               </Text>
             </View>
           )}
-          
         </>
       ) : (
         <>

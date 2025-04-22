@@ -13,7 +13,7 @@ import Institution from './screens/Insitution';
 import InstritutionDetails from './screens/InstritutionDetails';
 import EditProfile from './screens/EditProfile';
 import History from './screens/History';
-import historyDetails from './screens/HistoryDetails';
+import HistoryDetails from './screens/HistoryDetails';
 import Commission from './screens/Commission';
 import CommissionDetail from './screens/CommissionDetail';
 
@@ -49,7 +49,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={userToken ? 'Home' : 'Login'}>
+      <Stack.Navigator initialRouteName={userToken ? 'Home' : 'Home'}>
         <Stack.Screen
           name="Home"
           component={Home}
@@ -96,8 +96,8 @@ export default function App() {
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="historyDetails"
-          component={historyDetails}
+          name="HistoryDetails"
+          component={HistoryDetails}
           options={{headerShown: false}}
         />
         <Stack.Screen

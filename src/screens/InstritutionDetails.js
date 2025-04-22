@@ -595,6 +595,7 @@ const styles = StyleSheet.create({
     schoolLocation: {
         fontSize: 13,
         color: 'gray',
+        maxWidth: "90%"
     },
     todayOrdersText: {
         fontSize: 16,

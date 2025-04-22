@@ -127,7 +127,7 @@ const History = ({navigation}) => {
     <>
     {StockOut.length != 0 ? (
     <TouchableOpacity
-      onPress={() => navigation.navigate('historyDetails', {data: item})}>
+      onPress={() => navigation.navigate('HistoryDetails', {data: item})}>
       <View style={styles.itemContainer}>
         <Image
           source={{
@@ -627,7 +627,7 @@ const History = ({navigation}) => {
                       <Text style={styles.clear}>Clear Filter</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.filterBtn}>
+                    <TouchableOpacity style={styles.filterBtn} onPress={() => setVisible(false)}>
                       <Text style={styles.filterText}>Filter</Text>
                     </TouchableOpacity>
                   </View>
