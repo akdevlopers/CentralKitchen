@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute } from '@react-navigation/native';
+import { BaseUrl } from '../API/Global';
 
 const VerifyCode = ({navigation}) => {
   const [otp, setOtp] = useState('');
@@ -19,7 +20,7 @@ const VerifyCode = ({navigation}) => {
     console.log(user, "otp check")
     try {
       const response = await fetch(
-        'https://teachercanteen.akprojects.co/api/v1/kitchenpasswordresetupdate',
+        `${BaseUrl}kitchenpasswordresetupdate`,
         {
           method: 'POST',
           headers: {

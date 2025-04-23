@@ -13,6 +13,7 @@ import {
 import { Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BaseUrl } from '../API/Global';
 
 const LoginScreen = ({ navigation }) => {
   const { height } = Dimensions.get('window');
@@ -27,7 +28,7 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://teachercanteen.akprojects.co/api/v1/kitchenlogin', {
+      const response = await fetch(`${BaseUrl}kitchenlogin`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',

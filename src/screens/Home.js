@@ -22,7 +22,7 @@ import img from '../../public/assets/image.png';
 import college from '../../public/assets/college.png';
 import Icon from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Pagination from '../components/Pagination';
+import { BaseUrl, ImageUrl } from '../API/Global';
 import {
   Camera,
   useCameraDevice,
@@ -249,7 +249,7 @@ const Home = ({navigation}) => {
     console.log(user);
     try {
       const response = await fetch(
-        'https://teachercanteen.akprojects.co/api/v1/stock-inScan',
+        `${BaseUrl}stock-inScan`,
         {
           method: 'POST',
           headers: {
@@ -310,7 +310,7 @@ const Home = ({navigation}) => {
         // setLoading(true);
         try {
           const response = await fetch(
-            'https://teachercanteen.akprojects.co/api/v1/stock-inList?vendor=all',
+            `${BaseUrl}stock-inList?vendor=all`,
             {
               method: 'POST',
               headers: {
@@ -383,7 +383,7 @@ const Home = ({navigation}) => {
         // setLoading(true);
         try {
           const response = await fetch(
-            'https://teachercanteen.akprojects.co/api/v1/institutionList',
+            `${BaseUrl}institutionList`,
             {
               method: 'POST',
               headers: {
@@ -425,7 +425,7 @@ const Home = ({navigation}) => {
       const token = await AsyncStorage.getItem('userToken');
       try {
         const response = await fetch(
-          'https://teachercanteen.akprojects.co/api/v1/getvendors',
+          `${BaseUrl}getvendors`,
           {
             method: 'POST',
             headers: {
@@ -518,7 +518,7 @@ const Home = ({navigation}) => {
         const token = await AsyncStorage.getItem('userToken');
         try {
           const response = await fetch(
-            'https://teachercanteen.akprojects.co/api/v1/profile',
+            `${BaseUrl}profile`,
             {
               method: 'POST',
               headers: {
@@ -735,7 +735,7 @@ const Home = ({navigation}) => {
                   <View style={styles.itemContainer}>
                     <Image
                       source={{
-                        uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}`,
+                        uri: `${ImageUrl}${item.BrandLogo}`,
                       }}
                       style={styles.logo}
                     />
@@ -889,7 +889,7 @@ const Home = ({navigation}) => {
                   <View style={styles.itemContainer}>
                     <Image
                       source={{
-                        uri: `https://teachercanteen.akprojects.co/${item.school_logo}`,
+                        uri: `${ImageUrl}${item.school_logo}`,
                       }}
                       style={styles.logo}
                     />
@@ -1717,13 +1717,13 @@ const styles = StyleSheet.create({
   },
   vendorDropdownMenu: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 5,
     paddingVertical: 10,
     elevation: 5,
   },
   vendorDropdownItem: {
     padding: 10,
-    borderBottomWidth: 1,
+    // borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   LoadmodalContainer: {

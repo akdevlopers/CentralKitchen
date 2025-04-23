@@ -7,6 +7,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { users } from '../Data/Data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { BaseUrl, ImageUrl } from '../API/Global';
 
 const Commission = ({ navigation }) => {
     // FILTER DATA STARTS
@@ -38,7 +39,7 @@ const Commission = ({ navigation }) => {
             console.log(data)
             try {
                 const response = await fetch(
-                    'https://teachercanteen.akprojects.co/api/v1/commissionsEarned',
+                    `${BaseUrl}commissionsEarned`,
                     {
                         method: 'POST',
                         headers: {
@@ -124,7 +125,7 @@ const Commission = ({ navigation }) => {
             const token = await AsyncStorage.getItem('userToken');
             try {
                 const response = await fetch(
-                    'https://teachercanteen.akprojects.co/api/v1/fetchInstitutions',
+                    `${BaseUrl}fetchInstitutions`,
                     {
                         method: 'POST',
                         headers: {
@@ -160,14 +161,14 @@ const Commission = ({ navigation }) => {
     const renderStockOut = ({ item }) => (
         <TouchableOpacity onPress={() => navigation.navigate('CommissionDetail', { data: item })}>
             <View style={styles.itemContainer}>
-                <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.school_logo}` }} style={styles.logo} />
+                <Image source={{ uri: `${ImageUrl}${item.school_logo}` }} style={styles.logo} />
                 <View style={{ flex: 1 }}>
                     <Text style={styles.itemName}>{item.school_name}</Text>
                     <Text style={styles.qty}>{item.school_address}</Text>
                     <Text style={{}}>{item.order_timestamp}</Text>
                 </View>
                 <View>
-                    <Text style={styles.date}>RM0{item.rm_commission}</Text>
+                    <Text style={styles.date}>RM{item.rm_commission}</Text>
                 </View>
             </View>
         </TouchableOpacity>

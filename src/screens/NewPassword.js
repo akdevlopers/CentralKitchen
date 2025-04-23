@@ -10,6 +10,7 @@ import {
 import IconIcon from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useRoute } from '@react-navigation/native';
+import { BaseUrl } from '../API/Global';
 
 const NewPassword = ({ navigation }) => {
   const [newPassword, setNewPassword] = useState('');
@@ -29,7 +30,7 @@ const NewPassword = ({ navigation }) => {
     console.log(user, "otp check")
     try {
       const response = await fetch(
-        'https://teachercanteen.akprojects.co/api/v1/kitchenpasswordupdate',
+        `${BaseUrl}kitchenpasswordupdate`,
         {
           method: 'POST',
           headers: {

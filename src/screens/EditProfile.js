@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BaseUrl, ImageUrl } from '../API/Global';
 
 const ProfilePage = ({navigation}) => {
   const route = useRoute();
@@ -46,7 +47,7 @@ const ProfilePage = ({navigation}) => {
       };
       try {
         const response = await fetch(
-          'https://teachercanteen.akprojects.co/api/v1/changePassword',
+          `${BaseUrl}changePassword`,
           {
             method: 'POST',
             headers: {
@@ -87,7 +88,7 @@ const ProfilePage = ({navigation}) => {
     };
     try {
       const response = await fetch(
-        'https://teachercanteen.akprojects.co/api/v1/profile-update',
+        `${BaseUrl}profile-update`,
         {
           method: 'POST',
           headers: {

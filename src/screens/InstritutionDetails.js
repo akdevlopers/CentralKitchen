@@ -6,6 +6,7 @@ import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-cam
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BaseUrl, ImageUrl } from '../API/Global';
 
 const InstritutionDetails = ({ route, navigation }) => {
     const { data: initialData } = route.params;
@@ -35,7 +36,7 @@ const InstritutionDetails = ({ route, navigation }) => {
 
             try {
                 const response = await fetch(
-                    'https://teachercanteen.akprojects.co/api/v1/schoolOrderMenuList',
+                    `${BaseUrl}schoolOrderMenuList`,
                     {
                         method: 'POST',
                         headers: {
@@ -173,7 +174,7 @@ const InstritutionDetails = ({ route, navigation }) => {
         console.log(user)
         try {
             const response = await fetch(
-                'https://teachercanteen.akprojects.co/api/v1/scanOrderStatus',
+                `${BaseUrl}scanOrderStatus`,
                 {
                     method: 'POST',
                     headers: {
@@ -296,7 +297,7 @@ const InstritutionDetails = ({ route, navigation }) => {
         };
         try {
             const response = await fetch(
-                'https://teachercanteen.akprojects.co/api/v1/markDelivered',
+                `${BaseUrl}markDelivered`,
                 {
                     method: 'POST',
                     headers: {
@@ -337,7 +338,7 @@ const InstritutionDetails = ({ route, navigation }) => {
         };
         try {
             const response = await fetch(
-                'https://teachercanteen.akprojects.co/api/v1/confirmMarkDelivered',
+                `${BaseUrl}confirmMarkDelivered`,
                 {
                     method: 'POST',
                     headers: {
@@ -384,7 +385,7 @@ const InstritutionDetails = ({ route, navigation }) => {
                 </Text>
             </View>
             <View style={styles.schoolCard}>
-                <Image source={{ uri: `https://teachercanteen.akprojects.co/${data.school_logo}` }} style={styles.schoolLogo} />
+                <Image source={{ uri: `${ImageUrl}${data.school_logo}` }} style={styles.schoolLogo} />
                 <View>
                     <Text style={styles.schoolName}>{data.school_name}</Text>
                     <Text style={styles.schoolLocation}>{data.school_address}</Text>
@@ -400,7 +401,7 @@ const InstritutionDetails = ({ route, navigation }) => {
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.orderCard}>
-                        <Image source={{ uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}` }} style={styles.orderLogo} />
+                        <Image source={{ uri: `${ImageUrl}${item.BrandLogo}` }} style={styles.orderLogo} />
                         <View style={{ flex: 1 }}>
                             <Text style={styles.orderName}>{item.MenuTittleEnglish || 'No Data At Here'}</Text>
                             <Text style={styles.orderLocation}>{item.BrandName || 'No Data At Here'}</Text>

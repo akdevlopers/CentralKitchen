@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BaseUrl, ImageUrl } from '../API/Global'
 
 const HistoryDetails = ({ route, navigation }) => {
     const { data } = route.params;
@@ -14,7 +15,7 @@ const HistoryDetails = ({ route, navigation }) => {
 
             try {
                 const response = await fetch(
-                    'https://teachercanteen.akprojects.co/api/v1/stockOutMenus',
+                    `${BaseUrl}stockOutMenus`,
                     {
                         method: 'POST',
                         headers: {
@@ -58,7 +59,7 @@ const HistoryDetails = ({ route, navigation }) => {
                 </TouchableOpacity>
             </View>
             <View style={styles.schoolCard}>
-                <Image source={{uri: `https://teachercanteen.akprojects.co/${data.school_logo}`}} style={styles.schoolLogo} />
+                <Image source={{uri: `${ImageUrl}${data.school_logo}`}} style={styles.schoolLogo} />
                 <View>
                     <Text style={styles.schoolName}>{data.school_name}</Text>
                     <Text style={styles.schoolLocation}>{data.school_address}</Text>
@@ -83,7 +84,7 @@ const HistoryDetails = ({ route, navigation }) => {
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.orderCard}>
-                        <Image source={{uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}`}} style={styles.orderLogo} />
+                        <Image source={{uri: `${ImageUrl}${item.BrandLogo}`}} style={styles.orderLogo} />
                         <View style={{ flex: 1 }}>
                             <Text style={styles.orderName}>{item.MenuTittleEnglish}</Text>
                             <Text style={styles.orderLocation}>{item.BrandAddress}</Text>

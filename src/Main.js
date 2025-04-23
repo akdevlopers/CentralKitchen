@@ -49,7 +49,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={userToken ? 'Home' : 'Home'}>
+      <Stack.Navigator initialRouteName={userToken ? 'Home' : 'Login'}>
         <Stack.Screen
           name="Home"
           component={Home}

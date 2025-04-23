@@ -17,9 +17,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {users} from '../Data/Data';
 
-const img = require('../../public/assets/image.png');
-const college = require('../../public/assets/image.png');
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { BaseUrl, ImageUrl } from '../API/Global';
 
 const History = ({navigation}) => {
   const [activeTab, setActiveTab] = useState('StockIn');
@@ -108,7 +107,7 @@ const History = ({navigation}) => {
       {History.length > 0 ? (
         <>
       <Image
-        source={{uri: `https://teachercanteen.akprojects.co/${item.BrandLogo}`}}
+        source={{uri: `${ImageUrl}${item.BrandLogo}`}}
         style={styles.logo}
       />
       <View style={{flex: 1}}>
@@ -131,7 +130,7 @@ const History = ({navigation}) => {
       <View style={styles.itemContainer}>
         <Image
           source={{
-            uri: `https://teachercanteen.akprojects.co/${item.school_logo}`,
+            uri: `${ImageUrl}${item.school_logo}`,
           }}
           style={styles.logo}
         />
@@ -175,7 +174,7 @@ const History = ({navigation}) => {
       const token = await AsyncStorage.getItem('userToken');
       try {
         const response = await fetch(
-          'https://teachercanteen.akprojects.co/api/v1/getvendors',
+          `${BaseUrl}getvendors`,
           {
             method: 'POST',
             headers: {
@@ -210,7 +209,7 @@ const History = ({navigation}) => {
       const token = await AsyncStorage.getItem('userToken');
       try {
         const response = await fetch(
-          'https://teachercanteen.akprojects.co/api/v1/institutionList',
+          `${BaseUrl}institutionList`,
           {
             method: 'POST',
             headers: {
@@ -254,7 +253,7 @@ const History = ({navigation}) => {
       console.log(user);
       try {
         const response = await fetch(
-          'https://teachercanteen.akprojects.co/api/v1/histock-inList',
+          `${BaseUrl}histock-inList`,
           {
             method: 'POST',
             headers: {
@@ -306,7 +305,7 @@ const History = ({navigation}) => {
 
       try {
         const response = await fetch(
-          'https://teachercanteen.akprojects.co/api/v1/stockOutList',
+          `${BaseUrl}stockOutList`,
           {
             method: 'POST',
             headers: {

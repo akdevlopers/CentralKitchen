@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { BaseUrl, ImageUrl } from '../API/Global';
 
 const PasswordReset = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -16,7 +17,7 @@ const PasswordReset = ({ navigation }) => {
     console.log(user);
     try {
       const response = await fetch(
-        'https://teachercanteen.akprojects.co/api/v1/kitchenpasswordreset',
+        `${BaseUrl}kitchenpasswordreset`,
         {
           method: 'POST',
           headers: {
