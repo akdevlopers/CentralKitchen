@@ -22,7 +22,7 @@ import img from '../../public/assets/image.png';
 import college from '../../public/assets/college.png';
 import Icon from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BaseUrl, ImageUrl } from '../API/Global';
+import {BaseUrl, ImageUrl} from '../API/Global';
 import {
   Camera,
   useCameraDevice,
@@ -116,27 +116,46 @@ const Home = ({navigation}) => {
   // Camera setup
   const device = useCameraDevice(cameraPosition);
   const camera = useRef(null);
-
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
     onCodeScanned: codes => {
       if (!canScan) return;
+
       const qrCode = codes.find(c => c.type === 'qr');
       if (qrCode?.value) {
-        setCurrentValue(qrCode.value);
-        // if (lastScannedCodeRef.current === currentValue) return;
-        // lastScannedCodeRef.current = currentValue;
-        console.log(currentValue, 'From Home Page');
+        console.log(qrCode.value, 'Scanned');
 
-        handleStockIn();
+        setCurrentValue(qrCode.value); // optional if you use it elsewhere
+        handleStockIn(qrCode.value); // pass scanned value directly
 
-        setCanScan(false);
-        setTimeout(() => {
-          setCanScan(true);
-        }, 3000);
+        setCanScan(false); // prevent re-scan for a while
+        // setTimeout(() => {
+        //   setCanScan(true);
+        // }, 5000); // adjust delay as needed (e.g. 2 seconds)
       }
     },
   });
+
+  // const codeScanner = useCodeScanner({
+  //   codeTypes: ['qr'],
+  //   onCodeScanned: codes => {
+  //     if (!canScan) return;
+  //     const qrCode = codes.find(c => c.type === 'qr');
+  //     if (qrCode?.value) {
+  //       setCurrentValue(qrCode.value);
+  //       // if (lastScannedCodeRef.current === currentValue) return;
+  //       // lastScannedCodeRef.current = currentValue;
+  //       console.log(currentValue, 'From Home Page');
+
+  //       handleStockIn();
+
+  //       setCanScan(false);
+  //       setTimeout(() => {
+  //         setCanScan(true);
+  //       }, 3000);
+  //     }
+  //   },
+  // });
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -242,52 +261,100 @@ const Home = ({navigation}) => {
   const [notchVisible, setNotchVisible] = useState(false);
   const [reload, setReload] = useState(true);
 
-  const handleStockIn = async () => {
+  const handleStockIn = async scannedValue => {
     setQrModel(true);
     const token = await AsyncStorage.getItem('userToken');
-    const user = {sku: currentValue};
-    console.log(user);
-    try {
-      const response = await fetch(
-        `${BaseUrl}stock-inScan`,
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(user),
-        },
-      );
+    const user = {sku: scannedValue};
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+    try {
+      const response = await fetch(`${BaseUrl}stock-inScan`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(user),
+      });
 
       const json = await response.json();
+
       if (json.status) {
         setNotchVisible(true);
-        // Alert.alert(json.message);
-        // setReload(json.status)
-        console.log('Stock In successfully:', json);
+        setTimeout(() => {
+          setCanScan(true);
+        }, 3000);
+        console.log('Stock In success:', json);
       } else {
         Alert.alert(json.message);
+        setTimeout(() => {
+          setCanScan(true);
+        }, 2000);
         console.log('Failed to Stock In:', json);
       }
+
       setTimeout(() => {
         setNotchVisible(false);
-        setReload(!reload);
-      }, 1000);
-      return json;
+        setReload(prev => !prev);
+      }, 2000);
     } catch (error) {
+      setTimeout(() => {
+        setCanScan(true);
+      }, 2000);
       console.error('Stock In Failed:', error.message);
     }
   };
 
+  // const handleStockIn = async () => {
+  //   setQrModel(true);
+  //   const token = await AsyncStorage.getItem('userToken');
+  //   const user = {sku: currentValue};
+  //   console.log(user);
+  //   try {
+  //     const response = await fetch(
+  //       `${BaseUrl}stock-inScan`,
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           Accept: 'application/json',
+  //           'Content-Type': 'application/json',
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify(user),
+  //       },
+  //     );
+
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+
+  //     const json = await response.json();
+  //     if (json.status) {
+  //       setNotchVisible(true);
+  //       // Alert.alert(json.message);
+  //       // setReload(json.status)
+  //       console.log('Stock In successfully:', json);
+  //     } else {
+  //       Alert.alert(json.message);
+  //       console.log('Failed to Stock In:', json);
+  //     }
+  //     setTimeout(() => {
+  //       setNotchVisible(false);
+  //       setReload(!reload);
+  //     }, 1000);
+  //     return json;
+  //   } catch (error) {
+  //     console.error('Stock In Failed:', error.message);
+  //   }
+  // };
+
   // User List
 
   const [userData, setUserData] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageNumbers = Array.from({length: currentPage}, (_, i) => i + 1);
+  const [selectedPage, setSelectedPage] = useState(1);
+  const visiblePageCount = 3;
   const [userDataError, setUserDataError] = useState();
   const [FromHomeDate, setFromHomeDate] = useState(new Date());
   const [ToHomeDate, setToHomeDate] = useState(new Date());
@@ -305,22 +372,20 @@ const Home = ({navigation}) => {
           from_date: formatDate(fromDate),
           to_date: formatDate(toDate),
           search: homeSearch,
+          page: selectedPage,
         };
         console.log('Home Filter Data', data);
         // setLoading(true);
         try {
-          const response = await fetch(
-            `${BaseUrl}stock-inList?vendor=all`,
-            {
-              method: 'POST',
-              headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(data),
+          const response = await fetch(`${BaseUrl}stock-inList?vendor=all`, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
             },
-          );
+            body: JSON.stringify(data),
+          });
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -330,6 +395,7 @@ const Home = ({navigation}) => {
           if (json.status) {
             setUserData(json.result);
             setUserDataError(json.status);
+            setCurrentPage(json.pagination.total);
             setLoading(false);
           } else {
             setUserDataError(json.status);
@@ -342,10 +408,19 @@ const Home = ({navigation}) => {
         }
       };
       fetchData();
-    }, [selectedBrand, fromDate, toDate, homeSearch, currentValue, reload]),
+    }, [
+      selectedBrand,
+      fromDate,
+      toDate,
+      homeSearch,
+      currentValue,
+      reload,
+      selectedPage,
+    ]),
   );
   console.log('List User:', userData);
   console.log(reload);
+  console.log(selectedPage, 'Page Bla bla bla');
 
   // Instritutions List
   const [instDate, setInstDate] = useState(new Date());
@@ -353,6 +428,11 @@ const Home = ({navigation}) => {
   const [selectedStatusBrand, setSelectedStatusBrand] = useState('All');
   const [selectedStatusBrandId, setSelectedStatusBrandId] = useState('0,1');
   const [instSearch, setInstSearch] = useState('');
+
+  const [instcurrentPage, setinstCurrentPage] = useState();
+  const instpageNumbers = Array.from({length: currentPage}, (_, i) => i + 1);
+  const [instselectedPage, setinstSelectedPage] = useState(1);
+  const visibleinstPageCount = 3;
 
   const instListStatus = [
     {
@@ -382,18 +462,15 @@ const Home = ({navigation}) => {
         console.log('DONO', user);
         // setLoading(true);
         try {
-          const response = await fetch(
-            `${BaseUrl}institutionList`,
-            {
-              method: 'POST',
-              headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(user),
+          const response = await fetch(`${BaseUrl}institutionList`, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
             },
-          );
+            body: JSON.stringify(user),
+          });
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -402,8 +479,9 @@ const Home = ({navigation}) => {
           const json = await response.json();
           if (json.status) {
             setInstritutions(json.data);
+            // setinstCurrentPage(json.pagination.total);
             setLoading(false);
-            console.log('Institution Data:', json.data);
+            console.log('Institution Data:', json);
           } else {
             setLoading(false);
             console.log('Failed Fetch Institution Data:', json);
@@ -424,17 +502,14 @@ const Home = ({navigation}) => {
     const fetchFilterHome = async () => {
       const token = await AsyncStorage.getItem('userToken');
       try {
-        const response = await fetch(
-          `${BaseUrl}getvendors`,
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
+        const response = await fetch(`${BaseUrl}getvendors`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -517,17 +592,14 @@ const Home = ({navigation}) => {
       const fetchProfileData = async () => {
         const token = await AsyncStorage.getItem('userToken');
         try {
-          const response = await fetch(
-            `${BaseUrl}profile`,
-            {
-              method: 'POST',
-              headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
+          const response = await fetch(`${BaseUrl}profile`, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
             },
-          );
+          });
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -548,6 +620,24 @@ const Home = ({navigation}) => {
       fetchProfileData();
     }, []),
   );
+
+  const getVisiblePages = () => {
+    let startPage = Math.max(
+      1,
+      selectedPage - Math.floor(visiblePageCount / 2),
+    );
+    let endPage = startPage + visiblePageCount - 1;
+
+    if (endPage > currentPage) {
+      endPage = currentPage;
+      startPage = Math.max(1, endPage - visiblePageCount + 1);
+    }
+
+    return Array.from(
+      {length: endPage - startPage + 1},
+      (_, i) => startPage + i,
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -751,16 +841,85 @@ const Home = ({navigation}) => {
                   </View>
                 )}
               />
-              {/* <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Pagination setLength={7} />
-              </View> */}
+              <View style={{padding: 10, alignItems: 'center'}}>
+                <FlatList
+                  horizontal
+                  data={getVisiblePages()}
+                  keyExtractor={item => item.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      onPress={() => setSelectedPage(item)}
+                      style={{marginRight: 10}}>
+                      <Text
+                        style={{
+                          padding: 15,
+                          paddingHorizontal: 20,
+                          backgroundColor:
+                            selectedPage === item ? 'darkorange' : 'orange',
+                          borderRadius: 60,
+                        }}>
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  ListHeaderComponent={() => {
+                    if (selectedPage > Math.floor(visiblePageCount / 2) + 1) {
+                      return (
+                        <>
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(1)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === 1 ? 'darkorange' : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'<<'}
+                            </Text>
+                          </TouchableOpacity>
+                          {/* <Text style={{padding: 15, paddingHorizontal: 5}}>⋯</Text> */}
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                  ListFooterComponent={() => {
+                    if (
+                      selectedPage <
+                      currentPage - Math.floor(visiblePageCount / 2)
+                    ) {
+                      return (
+                        <>
+                          {/* <Text style={{padding: 15, paddingHorizontal: 5}}>⋯</Text> */}
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(currentPage)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === currentPage
+                                    ? 'darkorange'
+                                    : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'>>'}
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </View>
             </>
           ) : (
+            <>
             <View
               style={{
                 flex: 1,
@@ -775,6 +934,89 @@ const Home = ({navigation}) => {
                 No records found.
               </Text>
             </View>
+            
+            <View
+                style={{
+                  padding: 10,
+                  alignItems: 'center',
+                  justifyContent: 'end',
+                }}>
+                <FlatList
+                  horizontal
+                  data={getVisiblePages()}
+                  keyExtractor={item => item.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      onPress={() => setSelectedPage(item)}
+                      style={{marginRight: 10}}>
+                      <Text
+                        style={{
+                          padding: 15,
+                          paddingHorizontal: 20,
+                          backgroundColor:
+                            selectedPage === item ? 'darkorange' : 'orange',
+                          borderRadius: 60,
+                        }}>
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  ListHeaderComponent={() => {
+                    if (selectedPage > Math.floor(visiblePageCount / 2) + 1) {
+                      return (
+                        <>
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(1)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === 1 ? 'darkorange' : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'<<'}
+                            </Text>
+                          </TouchableOpacity>
+                          {/* <Text style={{padding: 15, paddingHorizontal: 5}}>⋯</Text> */}
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                  ListFooterComponent={() => {
+                    if (
+                      selectedPage <
+                      currentPage - Math.floor(visiblePageCount / 2)
+                    ) {
+                      return (
+                        <>
+                          {/* <Text style={{padding: 15, paddingHorizontal: 5}}>⋯</Text> */}
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(currentPage)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === currentPage
+                                    ? 'darkorange'
+                                    : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'>>'}
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </View>
+            </>
           )}
         </>
       ) : page === 'Instritution' ? (
@@ -1662,6 +1904,7 @@ const styles = StyleSheet.create({
     flex: 1,
     // justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#ffffff',
   },
   notchModalContainer: {
     flexDirection: 'row',
