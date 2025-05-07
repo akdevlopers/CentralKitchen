@@ -52,64 +52,75 @@ const InstritutionDetails = ({ route, navigation }) => {
     console.log('Commision Special Data', CommissionData);
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* School Details */}
-            <View style={styles.headerContainer}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Icon name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-            </View>
-            <View style={styles.schoolCard}>
-                <Image source={{uri: `${ImageUrl}${data.school_logo}`}} style={styles.schoolLogo} />
-                <View>
-                    <Text style={styles.schoolName}>{data.school_name}</Text>
-                    <Text style={styles.schoolLocation}>{data.school_address}</Text>
-                    <Text style={{}}>{data.order_timestamp}</Text>
+      <SafeAreaView style={styles.container}>
+        {/* School Details */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.schoolCard}>
+          <Image
+            source={{uri: `${ImageUrl}${data.school_logo}`}}
+            style={styles.schoolLogo}
+          />
+          <View>
+            <Text style={styles.schoolName}>{data.school_name}</Text>
+            <Text style={styles.schoolLocation}>{data.school_address}</Text>
+            <Text style={{}}>{data.order_timestamp}</Text>
+          </View>
+          <View>
+            <Text style={styles.date}>RM{data.rm_commission}</Text>
+          </View>
+        </View>
+
+        <View style={styles.cardContainer}>
+          <Text style={styles.cardTitle}>Commission Earned</Text>
+          <Text style={styles.cardAmount}>RM{data.rm_commission}</Text>
+        </View>
+
+        {/* Title */}
+        <Text style={styles.todayOrdersText}>Orders</Text>
+
+        {/* Order List */}
+        {CommissionData.length > 0 ? (
+          <FlatList
+            data={CommissionData}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({item}) => (
+              <View style={styles.orderCard}>
+                <Image
+                  source={{uri: `${ImageUrl}${item.BrandLogo}`}}
+                  style={styles.orderLogo}
+                />
+                <View style={{flex: 1}}>
+                  <Text style={styles.orderName}>{item.MenuTittleEnglish}</Text>
+                  <Text style={styles.orderLocation}>{item.BrandAddress}</Text>
                 </View>
-                <View>
-                    <Text style={styles.date}>RM0{data.rm_commission}</Text>
-                </View>
-            </View>
-
-            <View style={styles.cardContainer}>
-                <Text style={styles.cardTitle}>Commission Earned</Text>
-                <Text style={styles.cardAmount}>RM0{data.rm_commission}</Text>
-            </View>
-
-            {/* Title */}
-            <Text style={styles.todayOrdersText}>Orders</Text>
-
-            {/* Order List */}
-            {CommissionData.length >0 ? (
-            <FlatList
-                data={CommissionData}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                    <View style={styles.orderCard}>
-                        <Image source={{uri: `${ImageUrl}${item.BrandLogo}`}} style={styles.orderLogo} />
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.orderName}>{item.MenuTittleEnglish}</Text>
-                            <Text style={styles.orderLocation}>{item.BrandAddress}</Text>
-
-                        </View>
-                        <Text
-                            style={[
-                                styles.orderStatus,
-                                { color: item.ScanNewOrderStatus === 'Delivered' ? 'green' : 'orange' },
-                            ]}>
-                            {item.ScanNewOrderStatus}
-                        </Text>
-                    </View>
-                )}
-            /> ) : (
-                <View style= {{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                    <Text style={{fontSize: 18, fontWeight: 'bold'}}>No Commisions earned</Text>
-                </View>
+                <Text
+                  style={[
+                    styles.orderStatus,
+                    {
+                      color:
+                        item.ScanNewOrderStatus == 1 ? 'green' : 'orange',
+                    },
+                  ]}>
+                  {item.ScanNewOrderStatus == 1 ? 'Delivered' : 'Pending'}
+                </Text>
+              </View>
             )}
-        </SafeAreaView>
+          />
+        ) : (
+          <View
+            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+              No Commisions earned
+            </Text>
+          </View>
+        )}
+      </SafeAreaView>
     );
 };
 

@@ -36,7 +36,9 @@ const InstritutionDetails = ({route, navigation}) => {
   const lastScannedCodeRef = useRef(null);
   const [notchVisible, setNotchVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
+  
   const [currentPage, setCurrentPage] = useState(1);
   const pageNumbers = Array.from({length: currentPage}, (_, i) => i + 1);
   const [selectedPage, setSelectedPage] = useState(1);
@@ -496,9 +498,24 @@ const InstritutionDetails = ({route, navigation}) => {
             </Text>
           </View>
         )}
+                    ListFooterComponent={() =>
+                      loadingMore ? (
+                        <View style={{padding: 20, alignItems: 'center'}}>
+                          <ActivityIndicator size="large" color="orange" />
+                        </View>
+                      ) : null
+                    }
+                    onEndReached={() => {
+                      if (!loadingMore && selectedPage < currentPage) {
+                        setLoadingMore(true);
+                        setSelectedPage(prev => prev + 1);
+                      }
+                      setLoadingMore(false);
+                    }}
+                    onEndReachedThreshold={0.2}
       />
 
-      <View style={{padding: 10, alignItems: 'center'}}>
+      {/* <View style={{padding: 10, alignItems: 'center'}}>
         <FlatList
           horizontal
           data={pageCount}
@@ -537,7 +554,6 @@ const InstritutionDetails = ({route, navigation}) => {
                       {'<<'}
                     </Text>
                   </TouchableOpacity>
-                  {/* <Text style={{padding: 15, paddingHorizontal: 5}}>⋯</Text> */}
                 </>
               );
             }
@@ -547,7 +563,6 @@ const InstritutionDetails = ({route, navigation}) => {
             if (selectedPage < currentPage - Math.floor(visiblePageCount / 2)) {
               return (
                 <>
-                  {/* <Text style={{padding: 15, paddingHorizontal: 5}}>⋯</Text> */}
                   <TouchableOpacity
                     onPress={() => setSelectedPage(currentPage)}
                     style={{marginRight: 10}}>
@@ -570,7 +585,7 @@ const InstritutionDetails = ({route, navigation}) => {
             return null;
           }}
         />
-      </View>
+      </View> */}
 
       {/* QR Code Image */}
       <TouchableOpacity

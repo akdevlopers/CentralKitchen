@@ -175,70 +175,76 @@ const Commission = ({ navigation }) => {
     );
 
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.headerContainer}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Icon name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Commission's Earned</Text>
-            </View>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Commission's Earned</Text>
+        </View>
 
-            {/* Search */}
-            <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#ccc" />
-                <TextInput
-                    placeholder="Search History"
-                    placeholderTextColor="#999"
-                    style={styles.searchInput}
-                    onChangeText={setSearch}
-                    value={search}
-                />
-            </View>
-            <View style={styles.filterContainer}>
-                <View style={styles.filterBox}>
-                    <Text style={styles.label}>Vendor</Text>
-                    <TouchableOpacity style={styles.filterButton} onPress={() => setVisible(true)}>
-                        <Text style={styles.buttonText}>All</Text>
-                        <AntDesign name="down" size={14} color="#555" />
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#ccc" />
+          <TextInput
+            placeholder="Search History"
+            placeholderTextColor="#999"
+            style={styles.searchInput}
+            onChangeText={setSearch}
+            value={search}
+          />
+        </View>
+        <View style={styles.filterContainer}>
+          <View style={styles.filterBox}>
+            <Text style={styles.label}>Vendor</Text>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setVisible(true)}>
+              <Text style={styles.buttonText}>All</Text>
+              <AntDesign name="down" size={14} color="#555" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.filterBox}>
+            <Text style={styles.label}>Date Range</Text>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setVisible(true)}>
+              <MaterialIcons name="date-range" size={16} color="#555" />
+              <Text style={styles.buttonText}>12th - 14th Mar,25</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.cardContainer}>
+          <Text style={styles.cardTitle}>Commission Earned</Text>
+          <Text style={styles.cardAmount}>
+            RM{CommissionInstData.total_commision}
+          </Text>
+        </View>
+
+        <FlatList
+          data={CommissionInstData.data}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={renderStockOut}
+        />
+        <Modal visible={visible} animationType="slide" transparent>
+          <TouchableWithoutFeedback onPress={() => setVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <TouchableOpacity
+                      style={styles.closeIcon}
+                      onPress={() => setVisible(false)}>
+                      <Ionicons name="close" size={24} color="black" />
                     </TouchableOpacity>
-                </View>
 
-                <View style={styles.filterBox}>
-                    <Text style={styles.label}>Date Range</Text>
-                    <TouchableOpacity style={styles.filterButton} onPress={() => setVisible(true)}>
-                        <MaterialIcons name="date-range" size={16} color="#555" />
-                        <Text style={styles.buttonText}>12th - 14th Mar,25</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-            <View style={styles.cardContainer}>
-                <Text style={styles.cardTitle}>Commission Earned</Text>
-                <Text style={styles.cardAmount}>RM{CommissionInstData.total_commision}</Text>
-            </View>
+                    <Text style={styles.heading}>Filter</Text>
 
-            <FlatList
-                data={CommissionInstData.data}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={renderStockOut}
-            />
-            <Modal visible={visible} animationType="slide" transparent>
-                <TouchableWithoutFeedback onPress={() => setVisible(false)}>
-                    <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback onPress={() => { }}>
-                            <View style={styles.modalContainer}>
-                                <View style={styles.modalContent}>
-                                    <TouchableOpacity style={styles.closeIcon} onPress={() => setVisible(false)}>
-                                        <Ionicons name="close" size={24} color="black" />
-                                    </TouchableOpacity>
-
-
-                                    <Text style={styles.heading}>Filter</Text>
-
-                                    {/* <Text style={styles.label}>Vendor</Text>
+                    {/* <Text style={styles.label}>Vendor</Text>
                                     <TextInput
                                         placeholder="Search vendor"
                                         style={styles.input}
@@ -272,45 +278,58 @@ const Commission = ({ navigation }) => {
                                         }}
                                     /> */}
 
-                                    <Text style={styles.label}>Date Range</Text>
-                                    <View style={styles.dateContainer}>
-                                        <TouchableOpacity style={styles.dateBox} onPress={() => setShowFromPicker(true)}>
-                                            <Ionicons name="calendar-outline" size={20} color="gray" />
-                                            <Text>{formatDate(fromDate)}</Text>
-                                        </TouchableOpacity>
+                    <Text style={styles.label}>Date Range</Text>
+                    <View style={styles.dateContainer}>
+                      <TouchableOpacity
+                        style={styles.dateBox}
+                        onPress={() => setShowFromPicker(true)}>
+                        <Ionicons
+                          name="calendar-outline"
+                          size={20}
+                          color="gray"
+                        />
+                        <Text>{formatDate(fromDate)}</Text>
+                      </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.dateBox} onPress={() => setShowToPicker(true)}>
-                                            <Ionicons name="calendar-outline" size={20} color="gray" />
-                                            <Text>{formatDate(toDate)}</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                      <TouchableOpacity
+                        style={styles.dateBox}
+                        onPress={() => setShowToPicker(true)}>
+                        <Ionicons
+                          name="calendar-outline"
+                          size={20}
+                          color="gray"
+                        />
+                        <Text>{formatDate(toDate)}</Text>
+                      </TouchableOpacity>
+                    </View>
 
-                                    {showFromPicker && (
-                                        <DateTimePicker
-                                            value={fromDate}
-                                            mode="date"
-                                            display="default"
-                                            onChange={(event, selectedDate) => {
-                                                setShowFromPicker(false);
-                                                if (selectedDate) setFromDate(selectedDate);
-                                            }}
-                                        />
-                                    )}
+                    {showFromPicker && (
+                      <DateTimePicker
+                        value={fromDate}
+                        maximumDate={toDate}
+                        mode="date"
+                        display="default"
+                        onChange={(event, selectedDate) => {
+                          setShowFromPicker(false);
+                          if (selectedDate) setFromDate(selectedDate);
+                        }}
+                      />
+                    )}
 
-                                    {showToPicker && (
-                                        <DateTimePicker
-                                            value={toDate}
-                                            mode="date"
-                                            display="default"
-                                            onChange={(event, selectedDate) => {
-                                                setShowToPicker(false);
-                                                if (selectedDate) setToDate(selectedDate);
-                                            }}
-                                        />
-                                    )}
+                    {showToPicker && (
+                      <DateTimePicker
+                        value={toDate}
+                        minimumDate={fromDate}
+                        mode="date"
+                        display="default"
+                        onChange={(event, selectedDate) => {
+                          setShowToPicker(false);
+                          if (selectedDate) setToDate(selectedDate);
+                        }}
+                      />
+                    )}
 
-
-                                    {/* <Text style={styles.label}>Institutions</Text>
+                    {/* <Text style={styles.label}>Institutions</Text>
 
                                     <TextInput
                                         placeholder="Search institution"
@@ -354,27 +373,28 @@ const Commission = ({ navigation }) => {
                                         ))}
                                     </View> */}
 
-
-                                    {/* <View style={styles.checkboxContainer}>
+                    {/* <View style={styles.checkboxContainer}>
                                         <Text>Missed Items</Text>
                                     </View> */}
 
-                                    <View style={styles.footer}>
-                                        <TouchableOpacity onPress={clearFilters}>
-                                            <Text style={styles.clear}>Clear Filter</Text>
-                                        </TouchableOpacity>
+                    <View style={styles.footer}>
+                      <TouchableOpacity onPress={clearFilters}>
+                        <Text style={styles.clear}>Clear Filter</Text>
+                      </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.filterBtn} onPress={() => setVisible(false)}>
-                                            <Text style={styles.filterText}>Filter</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </View>
-                        </TouchableWithoutFeedback>
+                      <TouchableOpacity
+                        style={styles.filterBtn}
+                        onPress={() => setVisible(false)}>
+                        <Text style={styles.filterText}>Filter</Text>
+                      </TouchableOpacity>
                     </View>
-                </TouchableWithoutFeedback>
-            </Modal>
-        </View>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </View>
     );
 };
 

@@ -13,7 +13,6 @@ import {
   Alert,
   TouchableWithoutFeedback,
   ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -647,7 +646,7 @@ const Home = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>
@@ -823,39 +822,219 @@ const Home = ({navigation}) => {
           )} */}
 
           {/* List */}
+          {userDataError ? (
+            <>
+              <FlatList
+                data={userData}
+                keyExtractor={item => item.StockinID.toString()}
+                renderItem={({item}) => (
+                  <View style={styles.itemContainer}>
+                    <Image
+                      source={{uri: `${ImageUrl}${item.BrandLogo}`}}
+                      style={styles.logo}
+                    />
+                    <View style={{flex: 1}}>
+                      <Text style={styles.itemName}>
+                        {item.MenuTittleEnglish}
+                      </Text>
+                      <Text style={styles.qty}>
+                        Qty : {item.StockinQuantity}
+                      </Text>
+                      <Text style={styles.date}>{item.StockinUpdated}</Text>
+                    </View>
+                  </View>
+                )}
+                ListFooterComponent={() =>
+                  loadingMore ? (
+                    <View style={{padding: 20, alignItems: 'center'}}>
+                      <ActivityIndicator size="large" color="orange" />
+                    </View>
+                  ) : null
+                }
+                onEndReached={() => {
+                  if (!loadingMore && selectedPage < currentPage) {
+                    setLoadingMore(true);
+                    setSelectedPage(prev => prev + 1);
+                  }
+                    setLoadingMore(false);
 
-          <FlatList
-            data={userData}
-            keyExtractor={item => item.StockinID.toString()}
-            renderItem={({item}) => (
-              <View style={styles.itemContainer}>
-                <Image
-                  source={{uri: `${ImageUrl}${item.BrandLogo}`}}
-                  style={styles.logo}
+                }}
+                onEndReachedThreshold={0.2}
+              />
+
+              {/* <View style={{padding: 10, alignItems: 'center'}}>
+                <FlatList
+                  horizontal
+                  data={getVisiblePages()}
+                  keyExtractor={item => item.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      onPress={() => setSelectedPage(item)}
+                      style={{marginRight: 10}}>
+                      <Text
+                        style={{
+                          padding: 15,
+                          paddingHorizontal: 20,
+                          backgroundColor:
+                            selectedPage === item ? 'darkorange' : 'orange',
+                          borderRadius: 60,
+                        }}>
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  ListHeaderComponent={() => {
+                    if (selectedPage > Math.floor(visiblePageCount / 2) + 1) {
+                      return (
+                        <>
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(1)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === 1 ? 'darkorange' : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'<<'}
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                  ListFooterComponent={() => {
+                    if (
+                      selectedPage <
+                      currentPage - Math.floor(visiblePageCount / 2)
+                    ) {
+                      return (
+                        <>
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(currentPage)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === currentPage
+                                    ? 'darkorange'
+                                    : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'>>'}
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
                 />
-                <View style={{flex: 1}}>
-                  <Text style={styles.itemName}>{item.MenuTittleEnglish}</Text>
-                  <Text style={styles.qty}>Qty : {item.StockinQuantity}</Text>
-                  <Text style={styles.date}>{item.StockinUpdated}</Text>
-                </View>
+              </View> */}
+            </>
+          ) : (
+            <>
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <Text
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 'bold',
+                  }}>
+                  No records found.
+                </Text>
               </View>
-            )}
-            ListFooterComponent={() =>
-              loadingMore ? (
-                <View style={{padding: 20, alignItems: 'center'}}>
-                  <ActivityIndicator size="large" color="orange" />
-                </View>
-              ) : null
-            }
-            onEndReached={() => {
-              if (!loadingMore && selectedPage < currentPage) {
-                setLoadingMore(true);
-                setSelectedPage(prev => prev + 1);
-              }
-              setLoadingMore(false);
-            }}
-            onEndReachedThreshold={0.2}
-          />
+
+              {/* <View
+                style={{
+                  padding: 10,
+                  alignItems: 'center',
+                  justifyContent: 'end',
+                }}>
+                <FlatList
+                  horizontal
+                  data={getVisiblePages()}
+                  keyExtractor={item => item.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      onPress={() => setSelectedPage(item)}
+                      style={{marginRight: 10}}>
+                      <Text
+                        style={{
+                          padding: 15,
+                          paddingHorizontal: 20,
+                          backgroundColor:
+                            selectedPage === item ? 'darkorange' : 'orange',
+                          borderRadius: 60,
+                        }}>
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  ListHeaderComponent={() => {
+                    if (selectedPage > Math.floor(visiblePageCount / 2) + 1) {
+                      return (
+                        <>
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(1)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === 1 ? 'darkorange' : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'<<'}
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                  ListFooterComponent={() => {
+                    if (
+                      selectedPage <
+                      currentPage - Math.floor(visiblePageCount / 2)
+                    ) {
+                      return (
+                        <>
+                          <TouchableOpacity
+                            onPress={() => setSelectedPage(currentPage)}
+                            style={{marginRight: 10}}>
+                            <Text
+                              style={{
+                                padding: 15,
+                                paddingHorizontal: 20,
+                                backgroundColor:
+                                  selectedPage === currentPage
+                                    ? 'darkorange'
+                                    : 'orange',
+                                borderRadius: 60,
+                              }}>
+                              {'>>'}
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </View> */}
+            </>
+          )}
         </>
       ) : page === 'Instritution' ? (
         <>
@@ -1218,7 +1397,7 @@ const Home = ({navigation}) => {
           </View>
         </Modal>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1227,7 +1406,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-    paddingTop: 40,
+    paddingTop: 60,
   },
   header: {
     flexDirection: 'row',

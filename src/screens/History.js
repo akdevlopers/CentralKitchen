@@ -291,31 +291,31 @@ const History = ({navigation}) => {
     const fetchStockOut = async () => {
       const token = await AsyncStorage.getItem('userToken');
 
-      const user = {
-        // from_date: formatDate(fromDate),
-        // to_date: formatDate(toDate),
-        // search: schoolSearch
-        fromDate: formatDate(fromDate),
-        toDate: formatDate(toDate),
-        search: schoolSearch,
-        vendor: selectedInstitutionIds.join(', ')
-      };
+    const from = formatDate(fromDate);
+    const to = formatDate(toDate);
+    const schoolsSelected =
+      selectedInstitutionIds.length > 0
+        ? `"schools": "${selectedInstitutionIds.join(',')}"`
+        : `"schools":`;
 
-      console.log(user, "selecteed id test")
+    const rawBody = `{
+      "fromDate": "${from}",
+      "toDate": "${to}",
+      ${schoolsSelected}
+    }`;
+
+      console.log(rawBody, 'selecteed id test');
 
       try {
-        const response = await fetch(
-          `${BaseUrl}stockOutList`,
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(user),
+        const response = await fetch(`${BaseUrl}stockOutList`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-        );
+          body: JSON.stringify(rawBody),
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -389,7 +389,9 @@ const History = ({navigation}) => {
             style={styles.filterButton}
             onPress={() => setVisible(true)}>
             <MaterialIcons name="date-range" size={16} color="#555" />
-            <Text style={styles.buttonText}>12th - 14th Mar,25</Text>
+            <Text style={styles.buttonText}>
+              {formatDate(fromDate)} - {formatDate(toDate)}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -427,12 +429,22 @@ const History = ({navigation}) => {
           data={History}
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderStockIn}
+          ListEmptyComponent={() => (
+            <View style={{alignItems: 'center', marginTop: 20}}>
+              <Text style={{color: 'black'}}>No records found</Text>
+            </View>
+          )}
         />
       ) : (
         <FlatList
           data={StockOut}
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderStockOut}
+          ListEmptyComponent={() => (
+            <View style={{alignItems: 'center', marginTop: 20}}>
+              <Text style={{color: 'black'}}>No records found</Text>
+            </View>
+          )}
         />
       )}
 
@@ -478,6 +490,7 @@ const History = ({navigation}) => {
                   {showFromPicker && (
                     <DateTimePicker
                       value={fromDate}
+                      maximumDate={toDate}
                       mode="date"
                       display="default"
                       onChange={(event, selectedDate) => {
@@ -490,6 +503,7 @@ const History = ({navigation}) => {
                   {showToPicker && (
                     <DateTimePicker
                       value={toDate}
+                      minimumDate={fromDate}
                       mode="date"
                       display="default"
                       onChange={(event, selectedDate) => {
@@ -552,15 +566,17 @@ const History = ({navigation}) => {
                         onChangeText={setSearchInstitution}
                       />
 
-                      {searchInstitution.length > 0 && (
+                      {searchInstitution.length > 0 && instData.length > 0 && (
                         <FlatList
-                          data={institutions.filter(
-                            item =>
-                              item
-                                .toLowerCase()
-                                .includes(searchInstitution.toLowerCase()) &&
-                              !selectedInstitutions.includes(item),
-                          )}
+                          data={instData
+                            .map(item => item.school_name)
+                            .filter(
+                              item =>
+                                item
+                                  .toLowerCase()
+                                  .includes(searchInstitution.toLowerCase()) &&
+                                !selectedInstitutions.includes(item),
+                            )}
                           keyExtractor={(item, index) => index.toString()}
                           renderItem={({item}) => (
                             <TouchableOpacity
@@ -568,7 +584,6 @@ const History = ({navigation}) => {
                                 const selectedInstitution = instData.find(
                                   inst => inst.school_name === item,
                                 );
-
                                 if (selectedInstitution) {
                                   setSelectedInstitutions(prev => [
                                     ...prev,
@@ -579,7 +594,6 @@ const History = ({navigation}) => {
                                     selectedInstitution.school_id,
                                   ]);
                                 }
-
                                 setSearchInstitution('');
                               }}>
                               <Text style={styles.searchItem}>{item}</Text>
@@ -626,7 +640,9 @@ const History = ({navigation}) => {
                       <Text style={styles.clear}>Clear Filter</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.filterBtn} onPress={() => setVisible(false)}>
+                    <TouchableOpacity
+                      style={styles.filterBtn}
+                      onPress={() => setVisible(false)}>
                       <Text style={styles.filterText}>Filter</Text>
                     </TouchableOpacity>
                   </View>
