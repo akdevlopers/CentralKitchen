@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -10,21 +10,94 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { Dimensions } from 'react-native';
+import {Dimensions} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BaseUrl } from '../API/Global';
+import {BaseUrl} from '../API/Global';
+import {CommonActions} from '@react-navigation/native';
+import { PermissionsAndroid, Platform, Linking } from 'react-native';
+import { check, request, PERMISSIONS, RESULTS, openSettings } from 'react-native-permissions';
 
-const LoginScreen = ({ navigation }) => {
-  const { height } = Dimensions.get('window');
+const LoginScreen = ({navigation}) => {
+  const {height} = Dimensions.get('window');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+ const requestCameraPermission = async () => {
+  if (Platform.OS === 'android') {
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      {
+        title: 'Camera Permission',
+        message: 'This app needs camera access to proceed',
+        buttonPositive: 'OK',
+      }
+    );
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+  } else {
+    const result = await request(PERMISSIONS.IOS.CAMERA);
+    return result === RESULTS.GRANTED;
+  }
+};
+
+const checkAndRequestCamera = async () => {
+  if (Platform.OS === 'android') {
+    const granted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
+    if (!granted) {
+      const permissionResult = await requestCameraPermission();
+      if (!permissionResult) {
+        Alert.alert(
+          'Permission Required',
+          'Camera permission is needed to proceed. Please allow it in settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ]
+        );
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
+  const validateEmail = email => {
+    // Simple email regex
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  };
+
+  const validateForm = () => {
+    let valid = true;
+    setEmailError('');
+    setPasswordError('');
+
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      valid = false;
+    }
+
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      valid = false;
+    }
+
+    return valid;
+  };
 
   const handleLogin = async () => {
-    const user = { email, password }
+    if (!validateForm()) return;
+
+  const hasCameraPermission = await checkAndRequestCamera();
+  if (!hasCameraPermission) return;
+
+
+    const user = {email, password};
     setLoading(true);
 
     try {
@@ -43,7 +116,7 @@ const LoginScreen = ({ navigation }) => {
 
       const json = await response.json();
       if (json.status) {
-        await AsyncStorage.setItem("userToken", json.result.token);
+        await AsyncStorage.setItem('userToken', json.result.token);
         setTimeout(() => {
           setShowModal(true);
           setEmail('');
@@ -51,7 +124,10 @@ const LoginScreen = ({ navigation }) => {
         }, 400);
         setTimeout(() => {
           setShowModal(false);
-          navigation.navigate('Home', { user });
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'Home', params: {user}}],
+          });
         }, 1000);
         console.log('Login Success:', json);
       } else {
@@ -60,8 +136,6 @@ const LoginScreen = ({ navigation }) => {
         }, 500);
         console.log('Login Failed:', json);
       }
-      return json;
-
     } catch (error) {
       console.error('Login Failed:', error.message);
     } finally {
@@ -77,7 +151,7 @@ const LoginScreen = ({ navigation }) => {
         padding: 20,
         backgroundColor: '#fff',
       }}>
-      <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333' }}>
+      <Text style={{fontSize: 28, fontWeight: 'bold', color: '#333'}}>
         Welcome back!
       </Text>
       <Text
@@ -90,7 +164,7 @@ const LoginScreen = ({ navigation }) => {
         Glad to see you, Again!
       </Text>
 
-      <Text style={{ marginBottom: 5, color: '#555' }}>Email</Text>
+      <Text style={{marginBottom: 5, color: '#555'}}>Email</Text>
       <TextInput
         placeholder="Enter email"
         placeholderTextColor="#999"
@@ -98,16 +172,19 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setEmail}
         style={{
           borderWidth: 1,
-          borderColor: '#ccc',
+          borderColor: emailError ? 'red' : '#ccc',
           borderRadius: 8,
           padding: 12,
-          marginBottom: 15,
+          marginBottom: 5,
           color: '#333',
           fontWeight: 'bold',
         }}
       />
+      {emailError ? (
+        <Text style={{color: 'red', marginBottom: 10}}>{emailError}</Text>
+      ) : null}
 
-      <Text style={{ marginBottom: 5, color: '#555' }}>Password</Text>
+      <Text style={{marginBottom: 5, color: '#555'}}>Password</Text>
       <TextInput
         placeholder="Enter your password"
         placeholderTextColor="#999"
@@ -116,14 +193,17 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setPassword}
         style={{
           borderWidth: 1,
-          borderColor: '#ccc',
+          borderColor: passwordError ? 'red' : '#ccc',
           borderRadius: 8,
           padding: 12,
-          marginBottom: 15,
+          marginBottom: 5,
           color: '#333',
           fontWeight: 'bold',
         }}
       />
+      {passwordError ? (
+        <Text style={{color: 'red', marginBottom: 10}}>{passwordError}</Text>
+      ) : null}
 
       <TouchableOpacity onPress={() => navigation.navigate('PasswordReset')}>
         <Text style={styles.forgotText}>Forgot Password?</Text>
@@ -136,7 +216,7 @@ const LoginScreen = ({ navigation }) => {
           padding: 15,
           borderRadius: 8,
         }}>
-        <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
+        <Text style={{color: '#fff', textAlign: 'center', fontWeight: 'bold'}}>
           Login
         </Text>
       </TouchableOpacity>
@@ -170,10 +250,10 @@ const LoginScreen = ({ navigation }) => {
               <Icon name="check-circle" size={54} color="#2e7d32" />
             </View>
 
-            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 5 }}>
+            <Text style={{fontWeight: 'bold', fontSize: 18, marginBottom: 5}}>
               Success
             </Text>
-            <Text style={{ color: '#777', textAlign: 'center' }}>
+            <Text style={{color: '#777', textAlign: 'center'}}>
               User Verified Successfully
             </Text>
           </View>
@@ -209,10 +289,10 @@ const LoginScreen = ({ navigation }) => {
               <Icon name="times-circle" size={54} color="#ff4757" />
             </View>
 
-            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 5 }}>
+            <Text style={{fontWeight: 'bold', fontSize: 18, marginBottom: 5}}>
               Failed
             </Text>
-            <Text style={{ color: '#777', textAlign: 'center' }}>
+            <Text style={{color: '#777', textAlign: 'center'}}>
               Incorrect Email or Password
             </Text>
             <TouchableOpacity
@@ -224,7 +304,7 @@ const LoginScreen = ({ navigation }) => {
                 paddingHorizontal: 25,
                 borderRadius: 8,
               }}>
-              <Text style={{ color: '#fff' }}>OK</Text>
+              <Text style={{color: '#fff'}}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -237,8 +317,7 @@ const LoginScreen = ({ navigation }) => {
           transparent={true}
           animationType="fade"
           visible={true}
-          onRequestClose={() => { }}
-        >
+          onRequestClose={() => {}}>
           <View style={styles.modalContainer}>
             <View style={styles.loaderBox}>
               <ActivityIndicator size="large" color="#fff" />
@@ -247,7 +326,6 @@ const LoginScreen = ({ navigation }) => {
           </View>
         </Modal>
       )}
-
     </View>
   );
 };

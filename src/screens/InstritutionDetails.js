@@ -38,12 +38,11 @@ const InstritutionDetails = ({route, navigation}) => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  
   const [currentPage, setCurrentPage] = useState(1);
   const pageNumbers = Array.from({length: currentPage}, (_, i) => i + 1);
   const [selectedPage, setSelectedPage] = useState(1);
   const [selectedPageHere, setSelectedPageHere] = useState(1);
-  const [pageCount, setPageCount] = useState([1,2,3,4])
+  const [pageCount, setPageCount] = useState([1, 2, 3, 4]);
   const visiblePageCount = 5;
   const getVisiblePages = () => {
     let startPage = Math.max(
@@ -64,6 +63,7 @@ const InstritutionDetails = ({route, navigation}) => {
   };
 
   const [schoolData, setSchoolData] = useState();
+  const [handleUpdateList, setHandleUpdateList] = useState('');
 
   console.log('This for inst check', schoolData);
 
@@ -108,13 +108,13 @@ const InstritutionDetails = ({route, navigation}) => {
       };
 
       fetchSchoolMenu();
-    }, [status, selectedPageHere]),
+    }, [status, selectedPageHere, message, handleUpdateList]),
   );
 
-  const handleTest = (item) => {
-    setSelectedPageHere(item)
-  }
-  console.log(selectedPageHere)
+  const handleTest = item => {
+    setSelectedPageHere(item);
+  };
+  console.log(selectedPageHere);
 
   // Camera setup
   const device = useCameraDevice(cameraPosition);
@@ -218,6 +218,7 @@ const InstritutionDetails = ({route, navigation}) => {
 
         setCurrentValue(qrCode.value); // optional if you use it elsewhere
         handleStatus(qrCode.value); // pass scanned value directly
+        setHandleUpdateList(qrCode.status);
 
         setCanScan(false); // prevent re-scan for a while
         // setTimeout(() => {
@@ -226,6 +227,8 @@ const InstritutionDetails = ({route, navigation}) => {
       }
     },
   });
+
+  console.log(currentValue, 'This is status');
 
   const [status, setStatus] = useState('');
   const [stockError, setTsockError] = useState('');
@@ -498,21 +501,21 @@ const InstritutionDetails = ({route, navigation}) => {
             </Text>
           </View>
         )}
-                    ListFooterComponent={() =>
-                      loadingMore ? (
-                        <View style={{padding: 20, alignItems: 'center'}}>
-                          <ActivityIndicator size="large" color="orange" />
-                        </View>
-                      ) : null
-                    }
-                    onEndReached={() => {
-                      if (!loadingMore && selectedPage < currentPage) {
-                        setLoadingMore(true);
-                        setSelectedPage(prev => prev + 1);
-                      }
-                      setLoadingMore(false);
-                    }}
-                    onEndReachedThreshold={0.2}
+        ListFooterComponent={() =>
+          loadingMore ? (
+            <View style={{padding: 20, alignItems: 'center'}}>
+              <ActivityIndicator size="large" color="orange" />
+            </View>
+          ) : null
+        }
+        onEndReached={() => {
+          if (!loadingMore && selectedPage < currentPage) {
+            setLoadingMore(true);
+            setSelectedPage(prev => prev + 1);
+          }
+          setLoadingMore(false);
+        }}
+        onEndReachedThreshold={0.2}
       />
 
       {/* <View style={{padding: 10, alignItems: 'center'}}>

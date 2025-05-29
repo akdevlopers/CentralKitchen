@@ -12,7 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BaseUrl, ImageUrl } from '../API/Global';
+import {BaseUrl, ImageUrl} from '../API/Global';
 
 const ProfilePage = ({navigation}) => {
   const route = useRoute();
@@ -29,52 +29,63 @@ const ProfilePage = ({navigation}) => {
   const [error, setError] = useState('');
 
   const handleChangePassword = async () => {
+    // Input validations
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError('All fields are required');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters');
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      setError('Password Not Match');
-    } else {
-      setError('');
-      setShowModal(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      // Handle password update API here
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Clear errors
+    setError('');
+
+    try {
       const token = await AsyncStorage.getItem('userToken');
-      console.log('Pass');
       const user = {
         current_password: currentPassword,
         new_password: newPassword,
         confirm_password: confirmPassword,
       };
-      try {
-        const response = await fetch(
-          `${BaseUrl}changePassword`,
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(user),
-          },
-        );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+      const response = await fetch(`${BaseUrl}changePassword`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(user),
+      });
 
-        const json = await response.json();
-        if (json.status) {
-          Alert.alert(json.message);
-          console.log('Password Update successfully:', json);
-        } else {
-            Alert.alert(json.message);                  
-          console.log('Failed to Update Password:', json);
-        }
-        return json;
-      } catch (error) {
-        console.error('Password Update In Failed:', error.message);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const json = await response.json();
+
+      if (json.status) {
+        Alert.alert('Success', json.message);
+        console.log('Password updated successfully:', json);
+        setShowModal(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        navigation.goBack();
+      } else {
+        setError(json.message || 'Failed to update password');
+      }
+    } catch (error) {
+      console.error('Password update failed:', error.message);
+      setError('Something went wrong. Please try again later.');
     }
   };
 
@@ -87,18 +98,15 @@ const ProfilePage = ({navigation}) => {
       mobile: phone,
     };
     try {
-      const response = await fetch(
-        `${BaseUrl}profile-update`,
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(user),
+      const response = await fetch(`${BaseUrl}profile-update`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify(user),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -108,6 +116,7 @@ const ProfilePage = ({navigation}) => {
       if (json.status) {
         Alert.alert('Profile Update successfully');
         console.log('Profile Update successfully:', json);
+        navigation.goBack();
       } else {
         Alert.alert('Failed to Update Profile');
         console.log('Failed to Update Profile:', json);
@@ -185,7 +194,9 @@ const ProfilePage = ({navigation}) => {
             <Text style={styles.label}>Current Password</Text>
             <TextInput
               style={styles.input}
+              placeholder="Enter current password"
               secureTextEntry
+              autoCapitalize="none"
               value={currentPassword}
               onChangeText={setCurrentPassword}
             />
@@ -193,16 +204,19 @@ const ProfilePage = ({navigation}) => {
             <Text style={styles.label}>New Password</Text>
             <TextInput
               style={styles.input}
+              placeholder="Enter new password"
               secureTextEntry
+              autoCapitalize="none"
               value={newPassword}
               onChangeText={setNewPassword}
             />
 
             <Text style={styles.label}>Confirm New Password</Text>
             <TextInput
-              style={[styles.input, error ? {borderColor: 'red'} : null]}
-              placeholder="Placeholder"
+              style={styles.input}
+              placeholder="Confirm new password"
               secureTextEntry
+              autoCapitalize="none"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />

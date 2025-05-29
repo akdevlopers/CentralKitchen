@@ -365,55 +365,66 @@ const Home = ({navigation}) => {
   const [selectedBrandId, setSelectedBrandId] = useState();
   const [loading, setLoading] = useState(false);
   const [homeSearch, setHomeSearch] = useState('');
+  const [empty, setEmpty] = useState('');
+
+  const fetchData = async () => {
+    const token = await AsyncStorage.getItem('userToken');
+    const data = {
+      vendor: selectedBrandId,
+      from_date: formatDate(fromDate),
+      to_date: formatDate(toDate),
+      search: homeSearch,
+      // ...(homeSearch === '' && {page: selectedPage}),
+    };
+
+    console.log('Home Filter Data', data);
+    // setLoading(true);
+    try {
+      const response = await fetch(`${BaseUrl}stock-inList?vendor=all`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      if (json.status) {
+        // setUserData(json.result);
+        setUserData(prevData => {
+          const mergedData =
+          selectedPage === 1 ? json.result : [...prevData, ...json.result];
+          
+          const uniqueData = Array.from(
+            new Map(mergedData.map(item => [item.StockinID, item])).values(),
+          );
+          setEmpty('')
+
+          return uniqueData;
+        });
+
+        setUserDataError(json.status);
+        setCurrentPage(json.pagination.total);
+        setLoading(false);
+        setLoadingMore(false);
+      } else {
+        setEmpty('No data Found');
+        setUserData({})
+      }
+    } catch (error) {
+      console.error('Stock In Failed:', error.message);
+      setLoading(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
-      const fetchData = async () => {
-        const token = await AsyncStorage.getItem('userToken');
-        const data = {
-          vendor: selectedBrandId,
-          from_date: formatDate(fromDate),
-          to_date: formatDate(toDate),
-          search: homeSearch,
-          page: selectedPage,
-        };
-        console.log('Home Filter Data', data);
-        // setLoading(true);
-        try {
-          const response = await fetch(`${BaseUrl}stock-inList?vendor=all`, {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(data),
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const json = await response.json();
-          if (json.status) {
-            // setUserData(json.result);
-            setUserData(prevData =>
-              selectedPage === 1 ? json.result : [...prevData, ...json.result],
-            );
-            setUserDataError(json.status);
-            setCurrentPage(json.pagination.total);
-            setLoading(false);
-            setLoadingMore(false);
-          } else {
-            setUserDataError(json.status);
-            console.log('Failed to Stock In:', json);
-            setLoading(false);
-          }
-        } catch (error) {
-          console.error('Stock In Failed:', error.message);
-          setLoading(false);
-        }
-      };
       fetchData();
     }, [
       selectedBrand,
@@ -425,6 +436,15 @@ const Home = ({navigation}) => {
       selectedPage,
     ]),
   );
+
+  useEffect(() => {
+    if (homeSearch !== '') {
+      // Reset page and fetch new data when searching
+      setSelectedPage(1);
+      fetchData();
+    }
+  }, [homeSearch]);
+
   console.log('List User:', userData);
   console.log(reload);
   console.log(selectedPage, 'Page Bla bla bla');
@@ -823,7 +843,7 @@ const Home = ({navigation}) => {
           )} */}
 
           {/* List */}
-
+          {userData ? (
           <FlatList
             data={userData}
             keyExtractor={item => item.StockinID.toString()}
@@ -840,6 +860,11 @@ const Home = ({navigation}) => {
                 </View>
               </View>
             )}
+            ListEmptyComponent={() => (
+              <View style={{padding: 20, alignItems: 'center'}}>
+                <Text style={{fontSize: 16, color: '#888'}}>No data found</Text>
+              </View>
+            )}
             ListFooterComponent={() =>
               loadingMore ? (
                 <View style={{padding: 20, alignItems: 'center'}}>
@@ -850,12 +875,29 @@ const Home = ({navigation}) => {
             onEndReached={() => {
               if (!loadingMore && selectedPage < currentPage) {
                 setLoadingMore(true);
-                setSelectedPage(prev => prev + 1);
+                if(userData.length > 0) {
+                  setSelectedPage(prev => prev + 1);
+                }
               }
               setLoadingMore(false);
             }}
             onEndReachedThreshold={0.2}
-          />
+          /> ) : (
+<View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                }}>
+                No records found.
+              </Text>
+            </View>
+          )}
         </>
       ) : page === 'Instritution' ? (
         <>
